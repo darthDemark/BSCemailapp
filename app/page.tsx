@@ -168,7 +168,7 @@ export default function ProductionPage() {
         <input
           className={cls("field mono", "jobNumber")}
           type="text"
-          aria-invalid={errors.jobNumber || undefined}
+          aria-invalid={errors.jobNumber ? true : undefined}
           value={state.jobNumber}
           onChange={(e) => {
             clearError("jobNumber");
@@ -197,7 +197,7 @@ export default function ProductionPage() {
             <input
               className={cls("field mono", "aNumber")}
               type="text"
-              aria-invalid={errors.aNumber || undefined}
+              aria-invalid={errors.aNumber ? true : undefined}
               value={state.aNumber}
               onChange={(e) => {
                 clearError("aNumber");
@@ -223,7 +223,7 @@ export default function ProductionPage() {
               <input
                 className={cls("field", "subject")}
                 type="text"
-                aria-invalid={errors.subject || undefined}
+                aria-invalid={errors.subject ? true : undefined}
                 value={state.subject}
                 onChange={(e) => {
                   clearError("subject");
@@ -236,7 +236,7 @@ export default function ProductionPage() {
               <input
                 className={cls("field", "preheader")}
                 type="text"
-                aria-invalid={errors.preheader || undefined}
+                aria-invalid={errors.preheader ? true : undefined}
                 value={state.preheader}
                 onChange={(e) => {
                   clearError("preheader");
@@ -263,7 +263,7 @@ export default function ProductionPage() {
                     <input
                       className={cls("field", `subject:${keycode}`)}
                       type="text"
-                      aria-invalid={errors[`subject:${keycode}`] || undefined}
+                      aria-invalid={errors[`subject:${keycode}`] ? true : undefined}
                       value={state.perKeycode[keycode]?.subject ?? ""}
                       onChange={(e) => {
                         clearError(`subject:${keycode}`);
@@ -276,7 +276,7 @@ export default function ProductionPage() {
                     <input
                       className={cls("field", `preheader:${keycode}`)}
                       type="text"
-                      aria-invalid={errors[`preheader:${keycode}`] || undefined}
+                      aria-invalid={errors[`preheader:${keycode}`] ? true : undefined}
                       value={state.perKeycode[keycode]?.preheader ?? ""}
                       onChange={(e) => {
                         clearError(`preheader:${keycode}`);
