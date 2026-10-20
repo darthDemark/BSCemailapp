@@ -50,6 +50,15 @@ preheader requirement applies per keycode. Every other field follows
 the pruning rule — absent means simply not mentioned in the output
 (e.g. no compliance number → no `@complianceNumber` line, no block).
 
+Vital fields must also be RECOGNIZED, not just present (owner's ruling,
+2026-10-20): the Job number must contain a ref in the format
+`REF4113200`; the A number must resemble `A57222IFP-EM5-(multi)_1026`;
+subject and preheader must read as real text (sentence-like: several
+words, mostly letters, vowel-bearing words — keyboard mash fails).
+Unrecognized input gets the same treatment as missing: red outline, an
+"isn't recognized" error naming the field, and nothing output.
+Validation lives in `lib/validation.ts`.
+
 ## Deploy to Vercel
 
 1. Push this repo to GitHub.

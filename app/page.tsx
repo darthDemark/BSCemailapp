@@ -13,6 +13,7 @@ import {
   renderDeckHtml,
 } from "@/lib/copyDeck";
 import { parseKeycodes } from "@/lib/keycodes";
+import { validateVitalFields } from "@/lib/validation";
 import { deriveSfmcName } from "@/lib/naming";
 import { TEMPLATE_CLUSTERS, selectTemplate } from "@/lib/templates";
 
@@ -21,7 +22,7 @@ export default function ProductionPage() {
   // Vital-field errors (owner's ruling, 2026-10-19): Job number, A number,
   // Subject line and Preheader are VITAL. Missing any one → error state on
   // the field and NOTHING is output. Compliance stays optional (pruned).
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const cls = (base: string, key: string) =>
     errors[key] ? `${base} invalid` : base;
   const clearError = (key: string) =>
@@ -72,19 +73,15 @@ export default function ProductionPage() {
   };
 
   const generate = () => {
-    const errs: Record<string, boolean> = {};
-    if (!state.jobNumber.trim()) errs.jobNumber = true;
-    if (!state.aNumber.trim()) errs.aNumber = true;
-    if (isMulti) {
-      for (const kc of keycodes) {
-        const sp = state.perKeycode[kc];
-        if (!sp?.subject.trim()) errs[`subject:${kc}`] = true;
-        if (!sp?.preheader.trim()) errs[`preheader:${kc}`] = true;
-      }
-    } else {
-      if (!state.subject.trim()) errs.subject = true;
-      if (!state.preheader.trim()) errs.preheader = true;
-    }
+    const errs = validateVitalFields({
+      jobNumber: state.jobNumber,
+      aNumber: state.aNumber,
+      subject: state.subject,
+      preheader: state.preheader,
+      isMulti,
+      keycodes,
+      perKeycode: state.perKeycode,
+    });
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       // Nothing gets outputted when a vital field is missing.
@@ -315,23 +312,7 @@ export default function ProductionPage() {
 
         {Object.keys(errors).length > 0 ? (
           <div className="errorbar">
-            ✗ Vital field{Object.keys(errors).length > 1 ? "s" : ""} missing:{" "}
-            {Object.keys(errors)
-              .map((k) =>
-                k === "jobNumber"
-                  ? "Job number"
-                  : k === "aNumber"
-                    ? "A number"
-                    : k.startsWith("subject:")
-                      ? `Subject line (${k.slice(8)})`
-                      : k.startsWith("preheader:")
-                        ? `Preheader (${k.slice(10)})`
-                        : k === "subject"
-                          ? "Subject line"
-                          : "Preheader"
-              )
-              .join(", ")}{" "}
-            — nothing was output.
+            ✗ {Object.values(errors).join("; ")} — nothing was output.
           </div>
         ) : null}
         <button className="btn" type="button" onClick={generate}>

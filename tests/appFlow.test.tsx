@@ -239,4 +239,35 @@ describe("vital fields (owner's ruling, 2026-10-19)", () => {
     await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
     expect(win1?.textContent).toContain('SET @refNumber = "REF4113200"');
   });
+
+  it("gibberish in a vital field throws 'isn't recognized' and outputs nothing", async () => {
+    window.localStorage.clear();
+    const user = userEvent.setup();
+    const { container } = renderApp();
+    const monoInputs =
+      container.querySelectorAll<HTMLInputElement>("input.field.mono");
+    const [jobInput, keycodesField, aField] = Array.from(
+      monoInputs
+    ) as HTMLInputElement[];
+    fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
+    fireEvent.change(keycodesField, {
+      target: { value: "SAC, SD, LOC_PL" },
+    });
+    fireEvent.change(aField, { target: { value: "gibberish!!" } });
+    const textFields =
+      container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
+    fireEvent.change(textFields[0], {
+      target: { value: "You have more choice in your coverage" },
+    });
+    fireEvent.change(textFields[1], {
+      target: { value: "See what is new for your 2027 plan" },
+    });
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+    const win1 = container.querySelector(".win.dark .winbody");
+    expect(win1?.textContent?.trim()).toBe("");
+    expect(aField.classList.contains("invalid")).toBe(true);
+    expect(container.querySelector(".errorbar")?.textContent).toContain(
+      "isn't recognized"
+    );
+  });
 });
