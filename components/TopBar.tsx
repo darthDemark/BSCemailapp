@@ -7,7 +7,7 @@ import { gateUnlocked } from "@/lib/state";
 
 export function TopBar() {
   const pathname = usePathname();
-  const { state } = useAppState();
+  const { state, reset } = useAppState();
   const unlocked = gateUnlocked(state);
 
   return (
@@ -29,6 +29,9 @@ export function TopBar() {
             ? "✓ DELIVERABLE RELEASED"
             : "🔒 DELIVERABLE LOCKED — QA must pass"}
         </span>
+        <button type="button" className="resetbtn" onClick={reset}>
+          Field Rest
+        </button>
       </nav>
     </>
   );

@@ -15,6 +15,8 @@ import { DEFAULT_STATE, STORAGE_KEY, type AppState } from "@/lib/state";
 interface AppStateContextValue {
   state: AppState;
   update: (patch: Partial<AppState>) => void;
+  /** "Field Rest" — clear everything back to the empty defaults. */
+  reset: () => void;
 }
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
@@ -55,7 +57,14 @@ export function StateProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const value = useMemo(() => ({ state, update }), [state, update]);
+  const reset = useCallback(() => {
+    setState(DEFAULT_STATE);
+  }, []);
+
+  const value = useMemo(
+    () => ({ state, update, reset }),
+    [state, update, reset]
+  );
 
   return (
     <AppStateContext.Provider value={value}>
