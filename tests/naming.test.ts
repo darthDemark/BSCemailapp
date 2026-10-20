@@ -38,3 +38,13 @@ describe("naming transform (SPEC §3)", () => {
     expect(extractRef("no ref here")).toBe("");
   });
 });
+
+describe("ref in the middle of the job line (owner's note, 2026-10-20)", () => {
+  it("moves the ref to the FRONT of the SFMC file name", () => {
+    // His real job line shape: ref underscore-glued in the middle.
+    const line =
+      "5 EMAILS_Advantmed Risk Adjustment emails for ACA/MAD_REF3979650_A55529GMAD_0626";
+    expect(extractRef(line)).toBe("REF3979650");
+    expect(deriveSfmcName(line)).toBe("REF3979650_5_EMAILS_Advantmed_R");
+  });
+});
