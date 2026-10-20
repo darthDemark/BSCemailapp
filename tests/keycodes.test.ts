@@ -11,9 +11,17 @@ describe("keycode parsing (SPEC §4.1)", () => {
     expect(parseKeycodes("LOC_PL")).toEqual(["LOC_PL"]);
   });
 
-  it("accepts newlines, semicolons and bare spaces as separators", () => {
-    expect(parseKeycodes("SAC\nSD;LOC_PL")).toEqual(["SAC", "SD", "LOC_PL"]);
-    expect(parseKeycodes("SAC SD")).toEqual(["SAC", "SD"]);
+  it("ONLY a comma separates keycodes (owner's ruling, 2026-10-20)", () => {
+    // From his live screenshot: this is TWO keycodes, not three.
+    expect(parseKeycodes("MAPD IHV,GMAPD-CCPOA,")).toEqual([
+      "MAPD IHV",
+      "GMAPD-CCPOA",
+    ]);
+    // Spaces, hyphens, dashes and em dashes stay inside the keycode.
+    expect(parseKeycodes("SAC SD")).toEqual(["SAC SD"]);
+    expect(parseKeycodes("A-B, C—D, E – F")).toEqual(["A-B", "C—D", "E – F"]);
+    expect(parseKeycodes("SAC;SD")).toEqual(["SAC;SD"]);
+    expect(parseKeycodes("SAC\nSD")).toEqual(["SAC\nSD"]);
   });
 
   it("returns an empty array for empty input", () => {
