@@ -15,7 +15,7 @@ import { DEFAULT_STATE, STORAGE_KEY, type AppState } from "@/lib/state";
 interface AppStateContextValue {
   state: AppState;
   update: (patch: Partial<AppState>) => void;
-  /** "Field Rest" — clear everything back to the empty defaults. */
+  /** "Field Reset" — clear everything back to the empty defaults. */
   reset: () => void;
 }
 

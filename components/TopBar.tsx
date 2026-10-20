@@ -30,7 +30,7 @@ export function TopBar() {
             : "🔒 DELIVERABLE LOCKED — QA must pass"}
         </span>
         <button type="button" className="resetbtn" onClick={reset}>
-          Field Rest
+          Field Reset
         </button>
       </nav>
     </>
