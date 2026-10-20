@@ -50,11 +50,19 @@ preheader requirement applies per keycode. Every other field follows
 the pruning rule — absent means simply not mentioned in the output
 (e.g. no compliance number → no `@complianceNumber` line, no block).
 
-Vital fields must also be RECOGNIZED, not just present (owner's ruling,
-2026-10-20): the Job number must contain a ref in the format
-`REF4113200`; the A number must resemble `A57222IFP-EM5-(multi)_1026`;
-subject and preheader must read as real text (sentence-like: several
-words, mostly letters, vowel-bearing words — keyboard mash fails).
+Vital fields must also be RECOGNIZED, not just present. The rules were
+SIMPLIFIED by the owner on 2026-10-20 after his real job data failed
+the strict WinBack shapes (his A numbers look like `A55529GMAD_0626`;
+his ref sits underscore-glued in the job line, `...MAD_REF3979650_A...`):
+
+- **Job number:** must contain the letters `REF` in any capacity.
+- **A number:** must start with `A` followed by a series of numbers
+  and letters (separators `- _ ( ) .` allowed); the series must
+  contain at least one digit and at least one letter.
+- **Subject / preheader:** must read as coherent text (sentence-like:
+  several words, mostly letters, vowel-bearing words — keyboard mash
+  and nonsense fail).
+
 Unrecognized input gets the same treatment as missing: red outline, an
 "isn't recognized" error naming the field, and nothing output.
 Validation lives in `lib/validation.ts`.

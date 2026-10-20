@@ -6,25 +6,31 @@
  * throws the same gate as a missing field: red outline, an error naming
  * what wasn't recognized, and nothing output.
  *
- * Ref and A numbers must resemble the formats from the WinBack build:
- *   Ref:     REF4113200                    (REF + digits)
- *   A number: A57222IFP-EM5-(multi)_1026   (A + digits + letters,
- *             hyphen segments, optional -(multi), underscore + digits)
+ * Recognition rules — SIMPLIFIED by the owner 2026-10-20 after his
+ * real job data failed the strict WinBack shape (his A numbers look
+ * like `A55529GMAD_0626`; his ref sits underscore-glued inside the
+ * job line, `...MAD_REF3979650_A...`):
+ *   Job number: must contain the letters "REF" in any capacity.
+ *   A number:   must start with A, followed by a series of numbers
+ *               and letters (separators - _ ( ) . allowed) — the
+ *               series must contain at least one digit AND one letter.
+ * Subject/preheader keep the readable-text (coherent sense) check.
  */
 import type { SubjectPreheader } from "./ampscript";
 
-export const REF_EXAMPLE = "REF4113200";
-export const A_NUMBER_EXAMPLE = "A57222IFP-EM5-(multi)_1026";
-
-const REF_PATTERN = /\bREF\d+\b/;
-const A_NUMBER_PATTERN = /^A\d+[A-Z]+-[A-Z0-9]+(-\(multi\))?_\d+$/i;
-
 export function hasRecognizableRef(jobNumber: string): boolean {
-  return REF_PATTERN.test(jobNumber);
+  // The letters REF, in any capacity, anywhere in the job line.
+  return /REF/i.test(jobNumber);
 }
 
 export function looksLikeANumber(value: string): boolean {
-  return A_NUMBER_PATTERN.test(value.trim());
+  const v = value.trim();
+  if (!/^A/i.test(v)) return false;
+  const rest = v.slice(1);
+  if (rest.length < 4) return false;
+  if (!/^[0-9A-Za-z\-_().]+$/.test(rest)) return false;
+  // A series of numbers AND letters — both must be present.
+  return /\d/.test(rest) && /[A-Za-z]/.test(rest);
 }
 
 const KEYBOARD_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
@@ -81,7 +87,8 @@ export function validateVitalFields(input: VitalInput): Record<string, string> {
   if (!input.jobNumber.trim()) {
     errors.jobNumber = "Job number is missing";
   } else if (!hasRecognizableRef(input.jobNumber)) {
-    errors.jobNumber = `Job number isn't recognized — no ref number in the format ${REF_EXAMPLE} was found in it`;
+    errors.jobNumber =
+      "Job number isn't recognized — it must contain a REF number (the letters REF)";
   }
 
   if (input.isDynamic) {
@@ -93,13 +100,14 @@ export function validateVitalFields(input: VitalInput): Record<string, string> {
         errors[`aNumber:${kc}`] = `A number (${kc}) is missing`;
       } else if (!looksLikeANumber(value)) {
         errors[`aNumber:${kc}`] =
-          `A number (${kc}) isn't recognized — it must resemble the format ${A_NUMBER_EXAMPLE}`;
+          `A number (${kc}) isn't recognized — it must start with A followed by a series of numbers and letters`;
       }
     }
   } else if (!input.aNumber.trim()) {
     errors.aNumber = "A number is missing";
   } else if (!looksLikeANumber(input.aNumber)) {
-    errors.aNumber = `A number isn't recognized — it must resemble the format ${A_NUMBER_EXAMPLE}`;
+    errors.aNumber =
+      "A number isn't recognized — it must start with A followed by a series of numbers and letters";
   }
 
   const checkText = (key: string, label: string, value: string) => {

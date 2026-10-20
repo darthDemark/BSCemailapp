@@ -14,29 +14,36 @@ import {
 const WINBACK_LINE =
   "EM5 2027 OE IFP WinBack Email 5 More Choice (dynamic) 12/22 - REF4113200 A57222IFP-EM5-(multi)_1026";
 
-describe("ref number recognition", () => {
-  it("recognizes REF + digits inside the job line", () => {
+describe("ref recognition (owner's simplified rule, 2026-10-20)", () => {
+  it("recognizes the letters REF anywhere, in any capacity", () => {
     expect(hasRecognizableRef(WINBACK_LINE)).toBe(true);
-    expect(hasRecognizableRef("REF4113200")).toBe(true);
+    // His real job line: the ref is underscore-glued — MAD_REF3979650_A.
+    // (The old word-boundary pattern wrongly rejected this.)
+    expect(
+      hasRecognizableRef("5 EMAILS Advantmed emails for ACA/MAD_REF3979650_A55529")
+    ).toBe(true);
   });
-  it("rejects gibberish and REF without digits", () => {
+  it("rejects job lines with no REF in them", () => {
     expect(hasRecognizableRef("asdf qwer zxcv")).toBe(false);
-    expect(hasRecognizableRef("REF only, no digits")).toBe(false);
+    expect(hasRecognizableRef("5 EMAILS Advantmed Risk Adjustment")).toBe(false);
     expect(hasRecognizableRef("")).toBe(false);
   });
 });
 
-describe("A number recognition", () => {
-  it("accepts the WinBack format and close relatives", () => {
+describe("A number recognition (owner's simplified rule, 2026-10-20)", () => {
+  it("accepts A followed by a series of numbers and letters", () => {
+    // His real A number from the live job:
+    expect(looksLikeANumber("A55529GMAD_0626")).toBe(true);
+    // The WinBack shape still passes:
     expect(looksLikeANumber("A57222IFP-EM5-(multi)_1026")).toBe(true);
-    expect(looksLikeANumber("A57222IFP-EM5_1026")).toBe(true);
     expect(looksLikeANumber("A12345ABC-XY9_2027")).toBe(true);
   });
-  it("rejects gibberish", () => {
-    expect(looksLikeANumber("asdfghjkl")).toBe(false);
-    expect(looksLikeANumber("12345")).toBe(false);
-    expect(looksLikeANumber("A57222")).toBe(false);
-    expect(looksLikeANumber("hello world")).toBe(false);
+  it("rejects gibberish and non-conforming values", () => {
+    expect(looksLikeANumber("asdfghjkl")).toBe(false); // no digits in series
+    expect(looksLikeANumber("12345")).toBe(false); // doesn't start with A
+    expect(looksLikeANumber("A57222")).toBe(false); // numbers only, no letters
+    expect(looksLikeANumber("hello world")).toBe(false); // space, no leading A
+    expect(looksLikeANumber("*A55529GMAD_0626")).toBe(false); // stray character
     expect(looksLikeANumber("")).toBe(false);
   });
 });
@@ -74,7 +81,7 @@ describe("validateVitalFields", () => {
   it("names what's unrecognized, field by field", () => {
     const errs = validateVitalFields({
       ...good,
-      jobNumber: "random words with no reference",
+      jobNumber: "random words only, nothing else",
       perKeycodeA: { SAC: "gibberish" },
       subject: "asdf qwer zxcv",
     });
