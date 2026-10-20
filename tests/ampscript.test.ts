@@ -105,6 +105,21 @@ describe("pruning (SPEC §7 — no empty strings)", () => {
     expect(outsideSendLog(out)).not.toContain('""');
   });
 
+  it("no compliance number: build proceeds, compliance simply not mentioned (owner's rule, 2026-10-19)", () => {
+    const dyn = generateAmpscript({ ...WINBACK, complianceNumber: "" });
+    expect(dyn).toContain('SET @refNumber = "REF4113200"'); // build still generated
+    expect(dyn).not.toContain("complianceNumber");
+    expect(outsideSendLog(dyn)).not.toContain('""');
+    const stat = generateAmpscript({
+      ...WINBACK,
+      buildType: "static",
+      keycodesRaw: "",
+      complianceNumber: "",
+    });
+    expect(stat).not.toContain("complianceNumber");
+    expect(outsideSendLog(stat)).not.toContain('""');
+  });
+
   it("drops the whole conditional section when there are no keycodes", () => {
     const out = generateAmpscript({ ...WINBACK, keycodesRaw: "" });
     expect(out).not.toContain("ELSEIF");
