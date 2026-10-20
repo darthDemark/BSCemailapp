@@ -1,0 +1,63 @@
+%%[
+
+/*  
+Add these varables to the email Subject and Preheader fields then delete this section
+%%=v(@subject)=%%
+%%=v(@preheader)=%%
+*/
+
+/* Campaign vars 
+Remove quotes when connecting to a Data Extension.
+*/
+SET @MKT_LOB = "SAC"
+SET @refNumber = "REF4113200"
+SET @subject = "You have more choice in your coverage"
+SET @preheader = "See what is new for your 2027 plan" 
+SET @title = @subject
+SET @utmContent = @MKT_LOB
+
+/*conditional statements*/
+IF @MKT_LOB == "SAC" THEN 
+SET @version = "SAC"
+SET @aNumber = "A57222IFP-EM5-(multi)_1026"
+SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSACMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSACcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSACcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBDisclaimer")
+
+
+ELSEIF @MKT_LOB == "SD" THEN 
+SET @version = "SD"
+SET @aNumber = "A57222IFP-EM5-(multi)_1026"
+SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSDMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSDcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSDcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBDisclaimer")
+
+
+ELSEIF @MKT_LOB == "LOC_PL" THEN 
+SET @version = "LOC_PL"
+SET @aNumber = "A57222IFP-EM5-(multi)_1026"
+SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBLOC_PLMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBLOC_PLcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBLOC_PLcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBDisclaimer")
+
+ENDIF
+
+/* Global template vars */
+SET @webViewLinkText = "View this email as a web page"
+SET @complianceNumber = "BSC-COMP-2026-001"
+
+]%%
+
+
+<!-- %%[
+/* defined for send log */
+SET @TriggeredSendExternalKey = ""
+SET @SendTime = Now()
+SET @SubjectLine = @Subject
+SET @EmailName = [emailname_]
+SET @FromName = [replyname]
+SET @FromAddress = [replyemailaddress]
+]%% -->

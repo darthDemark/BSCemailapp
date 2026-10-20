@@ -1,0 +1,35 @@
+%%[
+
+/*  
+Add these varables to the email Subject and Preheader fields then delete this section
+%%=v(@subject)=%%
+%%=v(@preheader)=%%
+*/
+
+/* Campaign vars 
+Remove quotes when connecting to a Data Extension.
+*/
+SET @MKT_LOB = ""
+SET @refNumber = ""
+SET @version = ""
+SET @subject = ""
+SET @preheader = "" 
+SET @title = @subject
+
+/* Global template vars */
+SET @webViewLinkText = "View this email as a web page"
+SET @aNumber = ""
+SET @complianceNumber = ""
+
+]%%
+
+
+<!-- %%[
+/* defined for send log */
+SET @TriggeredSendExternalKey = ""
+SET @SendTime = Now()
+SET @SubjectLine = @Subject
+SET @EmailName = [emailname_]
+SET @FromName = [replyname]
+SET @FromAddress = [replyemailaddress]
+]%% -->
