@@ -42,7 +42,15 @@ h1.app { color: #0e2233; font-size: 26px; }
 
 .toggle { display: inline-flex; border: 2px solid #0f4c81; border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
 .toggle .t-opt { padding: 8px 26px; font-weight: 700; font-size: 14px; color: #0f4c81; background: #e8f1f8; margin: 0; text-transform: none; letter-spacing: 0; cursor: pointer; display: block; }
-.toggle .t-opt input { accent-color: #0f4c81; }
+.toggle .t-opt input, .variantrow .v-opt input {
+  appearance: none; -webkit-appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid currentColor; background: transparent;
+  vertical-align: -2px; margin: 0 6px 0 0; cursor: pointer; flex: none;
+}
+.toggle .t-opt input:checked, .variantrow .v-opt input:checked {
+  background: radial-gradient(circle, currentColor 0 3.5px, transparent 4.5px);
+}
 .toggle .on { background: #0f8a7d; color: #fff; }
 
 .variantrow { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 2px; }
@@ -51,11 +59,7 @@ h1.app { color: #0e2233; font-size: 26px; }
   font-size: 12.5px; font-weight: 600; color: #0f4c81; background: #eef6f4;
   border: 1.5px solid #bfe0d9; border-radius: 8px; padding: 8px 12px;
 }
-.variantrow .v-opt input { accent-color: #0f8a7d; }
 .variantrow .v-opt.on { background: #0f8a7d; color: #fff; border-color: #0f8a7d; }
-
-.cluster { font-size: 12px; color: #33536e; background: #eef6f4; border: 1px solid #bfe0d9; border-radius: 6px; padding: 7px 10px; margin: 8px 0 14px; }
-.cluster b { color: #0f8a7d; }
 
 label { display: block; font-size: 12px; font-weight: 700; color: #0f4c81; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 4px; }
 .field { background: #fdfdfd; border: 1.5px solid #9db8cc; border-radius: 6px; padding: 9px 11px; font-size: 14px; color: #16324a; width: 100%; font-family: inherit; display: block; }

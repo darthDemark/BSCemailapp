@@ -15,7 +15,6 @@ import {
 import { parseKeycodes } from "@/lib/keycodes";
 import { validateVitalFields } from "@/lib/validation";
 import { deriveSfmcName } from "@/lib/naming";
-import { TEMPLATE_CLUSTERS, selectTemplate } from "@/lib/templates";
 
 export default function ProductionPage() {
   const { state, update } = useAppState();
@@ -38,7 +37,6 @@ export default function ProductionPage() {
     () => parseKeycodes(state.keycodesRaw),
     [state.keycodesRaw]
   );
-  const cluster = selectTemplate(state.buildType, state.variant);
   const series = useMemo(
     () => parseDeckText(state.generatedDeckText),
     [state.generatedDeckText]
@@ -182,12 +180,6 @@ export default function ProductionPage() {
             </label>
           </div>
         ) : null}
-
-        <div className="cluster">
-          Template cluster called as an object: <b>{cluster.fileName}</b>
-          {"  "}·{"  "}clusters on hand:{" "}
-          {TEMPLATE_CLUSTERS.map((c) => c.fileName).join(" · ")}
-        </div>
 
         <label>Job number</label>
         <input
