@@ -115,7 +115,7 @@ export default function ProductionPage() {
                 checked={state.variant === "single"}
                 onChange={() => update({ variant: "single" })}
               />{" "}
-              One subject / preheader — ampscript-file-dynamic.html
+              ONE SL/PH
             </label>
             <label className={state.variant === "multi" ? "v-opt on" : "v-opt"}>
               <input
@@ -124,7 +124,7 @@ export default function ProductionPage() {
                 checked={state.variant === "multi"}
                 onChange={() => update({ variant: "multi" })}
               />{" "}
-              Subject / preheader per keycode — ampscript-file-dynamic-2.html
+              MULTI-SL/PH
             </label>
           </div>
         ) : null}
