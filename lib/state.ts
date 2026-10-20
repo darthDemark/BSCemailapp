@@ -22,36 +22,37 @@ export interface AppState {
   deckFileName: string;
   /** Window 1 content from the last Generate run. */
   generatedAmpscript: string;
+  /** Deck snapshot taken at the last Generate run — Window 2 renders
+   *  only this, so the window stays empty until Generate is pressed. */
+  generatedDeckText: string;
   /** Final build HTML pasted on the QA page. */
   pastedBuild: string;
   formatRun: QaRun | null;
   contentRun: QaRun | null;
 }
 
-/** The WinBack worked example — the app opens demo-ready, like the mock. */
+/** The app opens with every field empty (owner's call, 2026-10-19) —
+ *  output windows stay unoccupied until GENERATE OUTPUT is pressed. */
 export const DEFAULT_STATE: AppState = {
   buildType: "dynamic",
   variant: "single",
-  jobNumber:
-    "EM5 2027 OE IFP WinBack Email 5 More Choice (dynamic) 12/22 - REF4113200 A57222IFP-EM5-(multi)_1026",
-  keycodesRaw: "SAC, SD, LOC_PL",
-  aNumber: "A57222IFP-EM5-(multi)_1026",
-  complianceNumber: "BSC-COMP-2026-001",
-  subject: "You have more choice in your coverage",
-  preheader: "See what is new for your 2027 plan",
+  jobNumber: "",
+  keycodesRaw: "",
+  aNumber: "",
+  complianceNumber: "",
+  subject: "",
+  preheader: "",
   perKeycode: {},
-  deckText:
-    "More choice is coming to your 2027 plan. Compare your options side by side to find the coverage that fits you best.\n" +
-    "Enroll by December 22 to keep your doctors and the care you count on.\n\n" +
-    "Questions? Call the number on your Blue Shield member ID card.",
+  deckText: "",
   deckFileName: "",
   generatedAmpscript: "",
+  generatedDeckText: "",
   pastedBuild: "",
   formatRun: null,
   contentRun: null,
 };
 
-export const STORAGE_KEY = "bsc-email-build-app:v1";
+export const STORAGE_KEY = "bsc-email-build-app:v2";
 
 /**
  * Hash of everything a QA pass is bound to: the pasted build, the
@@ -72,6 +73,7 @@ export function currentInputsHash(state: AppState): string {
       state.perKeycode,
       state.deckText,
       state.generatedAmpscript,
+      state.generatedDeckText,
       state.pastedBuild,
     ])
   );

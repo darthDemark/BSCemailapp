@@ -50,8 +50,47 @@ describe("app flow — Production ↔ QA gate", () => {
     const user = userEvent.setup();
     const { container } = renderApp();
 
-    // --- Production opens demo-ready (Dynamic, WinBack) ---
+    // --- Production opens EMPTY (owner's call): no field is occupied ---
     const fileNameOut = container.querySelector("output.filename");
+    expect(fileNameOut?.textContent).not.toContain("REF4113200");
+    const winBodies = container.querySelectorAll(".winbody");
+    expect(winBodies[0]?.textContent?.trim()).toBe("");
+    expect(winBodies[1]?.textContent?.trim()).toBe("");
+
+    // --- Fill the WinBack job in by hand ---
+    const monoInputs =
+      container.querySelectorAll<HTMLInputElement>("input.field.mono");
+    const [jobInput, keycodesField, aField, complianceField] = Array.from(
+      monoInputs
+    ) as HTMLInputElement[];
+    fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
+    fireEvent.change(keycodesField, {
+      target: { value: "SAC, SD, LOC_PL" },
+    });
+    fireEvent.change(aField, {
+      target: { value: "A57222IFP-EM5-(multi)_1026" },
+    });
+    fireEvent.change(complianceField, {
+      target: { value: "BSC-COMP-2026-001" },
+    });
+    const textFields =
+      container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
+    fireEvent.change(textFields[0], {
+      target: { value: "You have more choice in your coverage" },
+    });
+    fireEvent.change(textFields[1], {
+      target: { value: "See what is new for your 2027 plan" },
+    });
+    const deckBox =
+      container.querySelector<HTMLTextAreaElement>("textarea.field")!;
+    fireEvent.change(deckBox, {
+      target: {
+        value:
+          "More choice is coming to your 2027 plan. Compare your options side by side to find the coverage that fits you best.\n" +
+          "Enroll by December 22 to keep your doctors and the care you count on.\n\n" +
+          "Questions? Call the number on your Blue Shield member ID card.",
+      },
+    });
     expect(fileNameOut?.textContent).toContain(
       "REF4113200_EM5_2027_OE_IFP_WinB"
     );
@@ -72,9 +111,6 @@ describe("app flow — Production ↔ QA gate", () => {
     expect(keycodesInput()).not.toBeNull();
 
     // --- File-name window updates live with the job number ---
-    const jobInput = container.querySelector<HTMLInputElement>(
-      "input.field.mono"
-    )!;
     fireEvent.change(jobInput, {
       target: { value: WINBACK_LINE.replace("EM5", "EM9") },
     });

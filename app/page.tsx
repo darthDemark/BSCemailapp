@@ -26,8 +26,8 @@ export default function ProductionPage() {
   );
   const cluster = selectTemplate(state.buildType, state.variant);
   const series = useMemo(
-    () => parseDeckText(state.deckText),
-    [state.deckText]
+    () => parseDeckText(state.generatedDeckText),
+    [state.generatedDeckText]
   );
   const deckHtml = useMemo(() => renderDeckHtml(series), [series]);
 
@@ -60,6 +60,7 @@ export default function ProductionPage() {
 
   const generate = () => {
     update({
+      generatedDeckText: state.deckText,
       generatedAmpscript: generateAmpscript({
         buildType: state.buildType,
         variant: state.variant,
@@ -143,7 +144,7 @@ export default function ProductionPage() {
         />
         <output className="filename">
           <b>Small window — file name in SFMC (auto, from the job number)</b>
-          {sfmcName || "— add a job number with a REF number —"}
+          {sfmcName || "—"}
         </output>
 
         <div className="grid">
@@ -272,20 +273,14 @@ export default function ProductionPage() {
           >
             {state.generatedAmpscript ? (
               <pre>{state.generatedAmpscript}</pre>
-            ) : (
-              "Press GENERATE OUTPUT — the filled template cluster appears here."
-            )}
+            ) : null}
           </OutputWindow>
 
           <OutputWindow
             title="WINDOW 2 — COPY DECK CONTENT OUTPUT (its own window)"
             copyText={deckHtml || undefined}
           >
-            {series.length === 0 ? (
-              <p style={{ color: "#777" }}>
-                No copy deck yet — upload or paste the deck above.
-              </p>
-            ) : (
+            {series.length === 0 ? null : (
               series.map((paragraphs, si) => (
                 <div key={si}>
                   {paragraphs.map((paragraph, pi) => {
@@ -306,12 +301,6 @@ export default function ProductionPage() {
                 </div>
               ))
             )}
-            {series.length > 0 ? (
-              <p style={{ marginTop: 10, color: "#777" }}>
-                Unfilled fields and empty blocks are pruned — no empty strings
-                in the output.
-              </p>
-            ) : null}
           </OutputWindow>
         </div>
 

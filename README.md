@@ -35,10 +35,11 @@ npm test           # Vitest suite (unit + app-flow integration)
 npm run lint       # ESLint (next core-web-vitals + typescript)
 ```
 
-The app opens pre-filled with the **WinBack worked example** (job line
-with `REF4113200`, keycodes `SAC, SD, LOC_PL`, A number
-`A57222IFP-EM5-(multi)_1026`, example subject/preheader/compliance and
-an example copy deck), so it is demo-ready immediately.
+The app opens with **every field empty** and both output windows
+unoccupied — content appears only when you fill the job in and press
+GENERATE OUTPUT. (The WinBack job — line with `REF4113200`, keycodes
+`SAC, SD, LOC_PL`, A number `A57222IFP-EM5-(multi)_1026` — remains the
+worked example the test suite runs against.)
 
 ## Deploy to Vercel
 

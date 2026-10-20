@@ -7,16 +7,13 @@ import { gateUnlocked } from "@/lib/state";
 
 export function TopBar() {
   const pathname = usePathname();
-  const { state, reset } = useAppState();
+  const { state } = useAppState();
   const unlocked = gateUnlocked(state);
 
   return (
     <>
       <h1 className="app">BlueShield Email Build App</h1>
-      <div className="sub">
-        Page 1 Production → Page 2 QA · Worked example pre-filled: the
-        WinBack job
-      </div>
+      <div className="sub">Page 1 Production → Page 2 QA</div>
       <nav className="topnav">
         <Link href="/" className={pathname === "/" ? "navlink on" : "navlink"}>
           Page 1 — Production
@@ -32,9 +29,6 @@ export function TopBar() {
             ? "✓ DELIVERABLE RELEASED"
             : "🔒 DELIVERABLE LOCKED — QA must pass"}
         </span>
-        <button type="button" className="resetbtn" onClick={reset}>
-          Reset to WinBack example
-        </button>
       </nav>
     </>
   );
