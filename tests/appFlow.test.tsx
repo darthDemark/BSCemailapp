@@ -58,20 +58,29 @@ describe("app flow — Production ↔ QA gate", () => {
     expect(winBodies[1]?.textContent?.trim()).toBe("");
 
     // --- Fill the WinBack job in by hand ---
-    const monoInputs =
+    const monoInputs = () =>
       container.querySelectorAll<HTMLInputElement>("input.field.mono");
-    const [jobInput, keycodesField, aField, complianceField] = Array.from(
-      monoInputs
+    const [jobInput, keycodesField, complianceField] = Array.from(
+      monoInputs()
     ) as HTMLInputElement[];
     fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
     fireEvent.change(keycodesField, {
       target: { value: "SAC, SD, LOC_PL" },
     });
-    fireEvent.change(aField, {
-      target: { value: "A57222IFP-EM5-(multi)_1026" },
-    });
     fireEvent.change(complianceField, {
       target: { value: "BSC-COMP-2026-001" },
+    });
+    // Dynamic: a DIFFERENT A number per keycode (2026-10-20 ruling).
+    // The per-keycode A fields appear once keycodes exist: [3],[4],[5].
+    const monos = Array.from(monoInputs()) as HTMLInputElement[];
+    fireEvent.change(monos[3], {
+      target: { value: "A57222IFP-EM5-(multi)_1026" },
+    });
+    fireEvent.change(monos[4], {
+      target: { value: "A58333IFP-EM5-(multi)_1026" },
+    });
+    fireEvent.change(monos[5], {
+      target: { value: "A59444IFP-EM5-(multi)_1026" },
     });
     const textFields =
       container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
@@ -201,15 +210,12 @@ describe("app flow — Production ↔ QA gate", () => {
   });
 });
 
-describe("vital fields (owner's ruling, 2026-10-19)", () => {
-  it("missing a vital field flags it red and outputs nothing; filling it unblocks", async () => {
-    window.localStorage.clear(); // isolate from the journey test's saved state
-    const user = userEvent.setup();
-    const { container } = renderApp();
-    const monoInputs =
+describe("vital fields (owner's ruling, 2026-10-19/20)", () => {
+  const fillExceptA = (container: HTMLElement) => {
+    const monoInputs = () =>
       container.querySelectorAll<HTMLInputElement>("input.field.mono");
-    const [jobInput, keycodesField, aField] = Array.from(
-      monoInputs
+    const [jobInput, keycodesField] = Array.from(
+      monoInputs()
     ) as HTMLInputElement[];
     fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
     fireEvent.change(keycodesField, {
@@ -223,49 +229,65 @@ describe("vital fields (owner's ruling, 2026-10-19)", () => {
     fireEvent.change(textFields[1], {
       target: { value: "See what is new for your 2027 plan" },
     });
-    // A number deliberately left EMPTY — Generate must refuse.
+    // Per-keycode A fields are [3],[4],[5] in mono order.
+    return () => Array.from(monoInputs()) as HTMLInputElement[];
+  };
+
+  it("missing A numbers: generate refuses, flags each keycode's field, outputs nothing — then recovers", async () => {
+    window.localStorage.clear();
+    const user = userEvent.setup();
+    const { container } = renderApp();
+    const monos = fillExceptA(container);
     await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
-    const win1 = container.querySelector(".win.dark .winbody");
-    expect(win1?.textContent?.trim()).toBe("");
-    expect(aField.classList.contains("invalid")).toBe(true);
+    const win1 = () =>
+      container.querySelector(".win.dark .winbody")?.textContent?.trim();
+    expect(win1()).toBe("");
+    const aFirst = monos()[3];
+    expect(aFirst.classList.contains("invalid")).toBe(true);
+    expect(container.querySelector(".errorbar")?.textContent).toContain(
+      "A number (SAC) is missing"
+    );
+
+    // Fill every keycode's A number: error clears, output generates.
+    fireEvent.change(monos()[3], {
+      target: { value: "A57222IFP-EM5-(multi)_1026" },
+    });
+    fireEvent.change(monos()[4], {
+      target: { value: "A58333IFP-EM5-(multi)_1026" },
+    });
+    fireEvent.change(monos()[5], {
+      target: { value: "A59444IFP-EM5-(multi)_1026" },
+    });
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+    expect(win1()).toContain('SET @refNumber = "REF4113200"');
+    expect(win1()).toContain('SET @aNumber = "A59444IFP-EM5-(multi)_1026"');
+    expect(container.querySelector(".errorbar")).toBeNull();
+
+    // Clearing a vital field re-blocks AND wipes the previous output.
+    fireEvent.change(monos()[3], { target: { value: "" } });
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+    expect(win1()).toBe("");
     expect(container.querySelector(".errorbar")?.textContent).toContain(
       "A number"
     );
-    // Fill it — error clears, output flows.
-    fireEvent.change(aField, {
-      target: { value: "A57222IFP-EM5-(multi)_1026" },
-    });
-    expect(aField.classList.contains("invalid")).toBe(false);
-    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
-    expect(win1?.textContent).toContain('SET @refNumber = "REF4113200"');
   });
 
   it("gibberish in a vital field throws 'isn't recognized' and outputs nothing", async () => {
     window.localStorage.clear();
     const user = userEvent.setup();
     const { container } = renderApp();
-    const monoInputs =
-      container.querySelectorAll<HTMLInputElement>("input.field.mono");
-    const [jobInput, keycodesField, aField] = Array.from(
-      monoInputs
-    ) as HTMLInputElement[];
-    fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
-    fireEvent.change(keycodesField, {
-      target: { value: "SAC, SD, LOC_PL" },
+    const monos = fillExceptA(container);
+    fireEvent.change(monos()[3], { target: { value: "gibberish!!" } });
+    fireEvent.change(monos()[4], {
+      target: { value: "A58333IFP-EM5-(multi)_1026" },
     });
-    fireEvent.change(aField, { target: { value: "gibberish!!" } });
-    const textFields =
-      container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
-    fireEvent.change(textFields[0], {
-      target: { value: "You have more choice in your coverage" },
-    });
-    fireEvent.change(textFields[1], {
-      target: { value: "See what is new for your 2027 plan" },
+    fireEvent.change(monos()[5], {
+      target: { value: "A59444IFP-EM5-(multi)_1026" },
     });
     await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
     const win1 = container.querySelector(".win.dark .winbody");
     expect(win1?.textContent?.trim()).toBe("");
-    expect(aField.classList.contains("invalid")).toBe(true);
+    expect(monos()[3].classList.contains("invalid")).toBe(true);
     expect(container.querySelector(".errorbar")?.textContent).toContain(
       "isn't recognized"
     );

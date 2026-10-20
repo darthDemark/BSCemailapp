@@ -10,6 +10,13 @@ const WINBACK: BuildInputs = {
     "EM5 2027 OE IFP WinBack Email 5 More Choice (dynamic) 12/22 - REF4113200 A57222IFP-EM5-(multi)_1026",
   keycodesRaw: "SAC, SD, LOC_PL",
   aNumber: "A57222IFP-EM5-(multi)_1026",
+  // Dynamic: a DIFFERENT A number per keycode (owner's ruling,
+  // 2026-10-20 — supersedes the single-A golden example on this point).
+  perKeycodeA: {
+    SAC: "A57222IFP-EM5-(multi)_1026",
+    SD: "A58333IFP-EM5-(multi)_1026",
+    LOC_PL: "A59444IFP-EM5-(multi)_1026",
+  },
   complianceNumber: "BSC-COMP-2026-001",
   subject: "You have more choice in your coverage",
   preheader: "See what is new for your 2027 plan",
@@ -29,8 +36,28 @@ function outsideSendLog(output: string): string {
 describe("dynamic generation vs the golden example", () => {
   const out = generateAmpscript(WINBACK);
 
-  it("reproduces the owner-approved golden file exactly", () => {
-    expect(out).toBe(golden);
+  it("matches the golden file except each branch carries its OWN A number", () => {
+    // The golden example (approved 2026-10-19) used one A number in all
+    // branches; the 2026-10-20 ruling supersedes that single point.
+    // Everything else must still match byte for byte.
+    // Rebuild expected by replacing the A occurrences in branch order.
+    const parts = golden.split('SET @aNumber = "A57222IFP-EM5-(multi)_1026"');
+    expect(parts).toHaveLength(4); // 3 branches => 4 segments
+    const expected =
+      parts[0] +
+      'SET @aNumber = "A57222IFP-EM5-(multi)_1026"' +
+      parts[1] +
+      'SET @aNumber = "A58333IFP-EM5-(multi)_1026"' +
+      parts[2] +
+      'SET @aNumber = "A59444IFP-EM5-(multi)_1026"' +
+      parts[3];
+    expect(out).toBe(expected);
+  });
+
+  it("gives every branch a different A number, its own keycode's", () => {
+    expect(out).toContain('SET @aNumber = "A57222IFP-EM5-(multi)_1026"');
+    expect(out).toContain('SET @aNumber = "A58333IFP-EM5-(multi)_1026"');
+    expect(out).toContain('SET @aNumber = "A59444IFP-EM5-(multi)_1026"');
   });
 
   it("builds one branch per keycode (IF + ELSEIF + ELSEIF + ENDIF)", () => {
@@ -100,7 +127,7 @@ describe("pruning (SPEC §7 — no empty strings)", () => {
   });
 
   it("removes an unfilled A number line from every branch", () => {
-    const out = generateAmpscript({ ...WINBACK, aNumber: "" });
+    const out = generateAmpscript({ ...WINBACK, perKeycodeA: {} });
     expect(out).not.toContain("SET @aNumber");
     expect(outsideSendLog(out)).not.toContain('""');
   });

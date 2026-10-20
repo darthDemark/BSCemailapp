@@ -72,10 +72,34 @@ export default function ProductionPage() {
     });
   };
 
+  const setPerKeycodeA = (keycode: string, value: string) => {
+    update({
+      perKeycodeA: { ...state.perKeycodeA, [keycode]: value },
+    });
+  };
+
+  const aNumberField = (keycode: string) => (
+    <div key={keycode}>
+      <label>A number — {keycode}</label>
+      <input
+        className={cls("field mono", `aNumber:${keycode}`)}
+        type="text"
+        aria-invalid={errors[`aNumber:${keycode}`] ? true : undefined}
+        value={state.perKeycodeA[keycode] ?? ""}
+        onChange={(e) => {
+          clearError(`aNumber:${keycode}`);
+          setPerKeycodeA(keycode, e.target.value);
+        }}
+      />
+    </div>
+  );
+
   const generate = () => {
     const errs = validateVitalFields({
       jobNumber: state.jobNumber,
       aNumber: state.aNumber,
+      isDynamic,
+      perKeycodeA: state.perKeycodeA,
       subject: state.subject,
       preheader: state.preheader,
       isMulti,
@@ -96,6 +120,7 @@ export default function ProductionPage() {
         jobNumber: state.jobNumber,
         keycodesRaw: state.keycodesRaw,
         aNumber: state.aNumber,
+        perKeycodeA: state.perKeycodeA,
         complianceNumber: state.complianceNumber,
         subject: state.subject,
         preheader: state.preheader,
@@ -192,6 +217,7 @@ export default function ProductionPage() {
               />
             </div>
           ) : null}
+          {!isDynamic ? (
           <div>
             <label>A number</label>
             <input
@@ -205,6 +231,7 @@ export default function ProductionPage() {
               }}
             />
           </div>
+          ) : null}
           <div>
             <label>Compliance number</label>
             <input
@@ -215,6 +242,13 @@ export default function ProductionPage() {
             />
           </div>
         </div>
+
+        {isDynamic && !isMulti && keycodes.length > 0 ? (
+          <>
+            <label>A numbers — a different one per keycode</label>
+            <div className="grid">{keycodes.map(aNumberField)}</div>
+          </>
+        ) : null}
 
         {!isMulti ? (
           <div className="grid">
@@ -284,6 +318,7 @@ export default function ProductionPage() {
                       }}
                     />
                   </div>
+                  {aNumberField(keycode)}
                 </div>
               ))
             )}

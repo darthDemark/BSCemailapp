@@ -62,7 +62,11 @@ export function looksLikeReadableText(raw: string): boolean {
 
 export interface VitalInput {
   jobNumber: string;
+  /** Static: the single A number. Dynamic: ignored — see perKeycodeA. */
   aNumber: string;
+  /** Dynamic: A number per keycode — each one vital + format-checked. */
+  isDynamic: boolean;
+  perKeycodeA: Record<string, string>;
   subject: string;
   preheader: string;
   isMulti: boolean;
@@ -80,7 +84,19 @@ export function validateVitalFields(input: VitalInput): Record<string, string> {
     errors.jobNumber = `Job number isn't recognized — no ref number in the format ${REF_EXAMPLE} was found in it`;
   }
 
-  if (!input.aNumber.trim()) {
+  if (input.isDynamic) {
+    // Dynamic = multiple emails: a DIFFERENT A number per keycode,
+    // each one vital and format-checked (owner's ruling, 2026-10-20).
+    for (const kc of input.keycodes) {
+      const value = input.perKeycodeA[kc] ?? "";
+      if (!value.trim()) {
+        errors[`aNumber:${kc}`] = `A number (${kc}) is missing`;
+      } else if (!looksLikeANumber(value)) {
+        errors[`aNumber:${kc}`] =
+          `A number (${kc}) isn't recognized — it must resemble the format ${A_NUMBER_EXAMPLE}`;
+      }
+    }
+  } else if (!input.aNumber.trim()) {
     errors.aNumber = "A number is missing";
   } else if (!looksLikeANumber(input.aNumber)) {
     errors.aNumber = `A number isn't recognized — it must resemble the format ${A_NUMBER_EXAMPLE}`;

@@ -18,6 +18,8 @@ export interface AppState {
   subject: string;
   preheader: string;
   perKeycode: Record<string, SubjectPreheader>;
+  /** Dynamic: A number per keycode (owner's ruling, 2026-10-20). */
+  perKeycodeA: Record<string, string>;
   deckText: string;
   deckFileName: string;
   /** Window 1 content from the last Generate run. */
@@ -43,6 +45,7 @@ export const DEFAULT_STATE: AppState = {
   subject: "",
   preheader: "",
   perKeycode: {},
+  perKeycodeA: {},
   deckText: "",
   deckFileName: "",
   generatedAmpscript: "",
@@ -71,6 +74,7 @@ export function currentInputsHash(state: AppState): string {
       state.subject,
       state.preheader,
       state.perKeycode,
+      state.perKeycodeA,
       state.deckText,
       state.generatedAmpscript,
       state.generatedDeckText,

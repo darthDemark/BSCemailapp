@@ -60,6 +60,8 @@ describe("validateVitalFields", () => {
   const good = {
     jobNumber: WINBACK_LINE,
     aNumber: "A57222IFP-EM5-(multi)_1026",
+    isDynamic: true,
+    perKeycodeA: { SAC: "A57222IFP-EM5-(multi)_1026" },
     subject: "You have more choice in your coverage",
     preheader: "See what is new for your 2027 plan",
     isMulti: false,
@@ -73,12 +75,31 @@ describe("validateVitalFields", () => {
     const errs = validateVitalFields({
       ...good,
       jobNumber: "random words with no reference",
-      aNumber: "gibberish",
+      perKeycodeA: { SAC: "gibberish" },
       subject: "asdf qwer zxcv",
     });
     expect(errs.jobNumber).toContain("isn't recognized");
-    expect(errs.aNumber).toContain("isn't recognized");
+    expect(errs["aNumber:SAC"]).toContain("isn't recognized");
     expect(errs.subject).toContain("isn't recognized");
     expect(errs.preheader).toBeUndefined();
+  });
+
+  it("dynamic: every keycode needs its own A number", () => {
+    const errs = validateVitalFields({
+      ...good,
+      keycodes: ["SAC", "SD"],
+      perKeycodeA: { SAC: "A57222IFP-EM5-(multi)_1026" },
+    });
+    expect(errs["aNumber:SD"]).toContain("missing");
+  });
+
+  it("static: the single A number is format-checked", () => {
+    const errs = validateVitalFields({
+      ...good,
+      isDynamic: false,
+      keycodes: [],
+      aNumber: "nope",
+    });
+    expect(errs.aNumber).toContain("isn't recognized");
   });
 });

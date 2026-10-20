@@ -18,7 +18,11 @@ export interface BuildInputs {
   jobNumber: string;
   /** Raw keycodes field (Dynamic only), parsed as an ordered array. */
   keycodesRaw: string;
+  /** Static: the single A number (top-level in the static template). */
   aNumber: string;
+  /** Dynamic: a DIFFERENT A number per keycode (owner's ruling,
+   *  2026-10-20) — each branch's @aNumber comes from this map. */
+  perKeycodeA?: Record<string, string>;
   complianceNumber: string;
   /** Shared subject/preheader (Static, and Dynamic "single" variant). */
   subject: string;
@@ -168,7 +172,10 @@ export function fillTemplate(
           continue;
         }
         if (bodyLine.startsWith("SET @aNumber ")) {
-          const filled = fillOrPrune(bodyLine, inputs.aNumber || undefined);
+          const filled = fillOrPrune(
+            bodyLine,
+            inputs.perKeycodeA?.[keycode] || undefined
+          );
           if (filled !== null) out.push(filled);
           continue;
         }
