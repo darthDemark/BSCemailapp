@@ -31,9 +31,11 @@ h1.app { color: #0e2233; font-size: 26px; }
 }
 .gatebadge.open { color: #0b5a50; background: #e9f7f3; border-color: #8fd0c2; }
 .resetbtn {
-  margin-left: auto; background: none; border: none; cursor: pointer;
-  color: #4b6a84; font-size: 12.5px; text-decoration: underline; font-family: inherit;
+  margin-left: auto; background: #111; color: #fff; border: 1px solid #111;
+  border-radius: 8px; padding: 8px 16px; cursor: pointer;
+  font-size: 12.5px; font-weight: 700; font-family: inherit;
 }
+.resetbtn:hover { background: #000; }
 
 .page { background: #fff; border: 2px solid #0f4c81; border-radius: 10px; margin-bottom: 22px; overflow: hidden; }
 .pagehead { background: #0f4c81; color: #fff; padding: 10px 16px; font-size: 17px; font-weight: 700; letter-spacing: 0.4px; }
