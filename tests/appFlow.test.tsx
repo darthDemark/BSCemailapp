@@ -200,3 +200,43 @@ describe("app flow — Production ↔ QA gate", () => {
     expect(JSON.parse(saved!).pastedBuild).toContain("edited");
   });
 });
+
+describe("vital fields (owner's ruling, 2026-10-19)", () => {
+  it("missing a vital field flags it red and outputs nothing; filling it unblocks", async () => {
+    window.localStorage.clear(); // isolate from the journey test's saved state
+    const user = userEvent.setup();
+    const { container } = renderApp();
+    const monoInputs =
+      container.querySelectorAll<HTMLInputElement>("input.field.mono");
+    const [jobInput, keycodesField, aField] = Array.from(
+      monoInputs
+    ) as HTMLInputElement[];
+    fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
+    fireEvent.change(keycodesField, {
+      target: { value: "SAC, SD, LOC_PL" },
+    });
+    const textFields =
+      container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
+    fireEvent.change(textFields[0], {
+      target: { value: "You have more choice in your coverage" },
+    });
+    fireEvent.change(textFields[1], {
+      target: { value: "See what is new for your 2027 plan" },
+    });
+    // A number deliberately left EMPTY — Generate must refuse.
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+    const win1 = container.querySelector(".win.dark .winbody");
+    expect(win1?.textContent?.trim()).toBe("");
+    expect(aField.classList.contains("invalid")).toBe(true);
+    expect(container.querySelector(".errorbar")?.textContent).toContain(
+      "A number"
+    );
+    // Fill it — error clears, output flows.
+    fireEvent.change(aField, {
+      target: { value: "A57222IFP-EM5-(multi)_1026" },
+    });
+    expect(aField.classList.contains("invalid")).toBe(false);
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+    expect(win1?.textContent).toContain('SET @refNumber = "REF4113200"');
+  });
+});

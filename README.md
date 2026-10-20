@@ -41,6 +41,15 @@ GENERATE OUTPUT. (The WinBack job — line with `REF4113200`, keycodes
 `SAC, SD, LOC_PL`, A number `A57222IFP-EM5-(multi)_1026` — remains the
 worked example the test suite runs against.)
 
+## Vital fields
+
+**Job number, A number, Subject line and Preheader are vital** (owner's
+ruling, 2026-10-19): if any is missing, GENERATE OUTPUT flags the field
+with a red outline and outputs nothing. In MULTI-SL/PH the subject /
+preheader requirement applies per keycode. Every other field follows
+the pruning rule — absent means simply not mentioned in the output
+(e.g. no compliance number → no `@complianceNumber` line, no block).
+
 ## Deploy to Vercel
 
 1. Push this repo to GitHub.

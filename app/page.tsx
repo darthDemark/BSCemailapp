@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAppState } from "@/components/StateProvider";
 import { OutputWindow } from "@/components/OutputWindow";
 import { DeliverableBar } from "@/components/DeliverableBar";
@@ -18,6 +18,19 @@ import { TEMPLATE_CLUSTERS, selectTemplate } from "@/lib/templates";
 
 export default function ProductionPage() {
   const { state, update } = useAppState();
+  // Vital-field errors (owner's ruling, 2026-10-19): Job number, A number,
+  // Subject line and Preheader are VITAL. Missing any one → error state on
+  // the field and NOTHING is output. Compliance stays optional (pruned).
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const cls = (base: string, key: string) =>
+    errors[key] ? `${base} invalid` : base;
+  const clearError = (key: string) =>
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
 
   const sfmcName = deriveSfmcName(state.jobNumber);
   const keycodes = useMemo(
@@ -59,6 +72,25 @@ export default function ProductionPage() {
   };
 
   const generate = () => {
+    const errs: Record<string, boolean> = {};
+    if (!state.jobNumber.trim()) errs.jobNumber = true;
+    if (!state.aNumber.trim()) errs.aNumber = true;
+    if (isMulti) {
+      for (const kc of keycodes) {
+        const sp = state.perKeycode[kc];
+        if (!sp?.subject.trim()) errs[`subject:${kc}`] = true;
+        if (!sp?.preheader.trim()) errs[`preheader:${kc}`] = true;
+      }
+    } else {
+      if (!state.subject.trim()) errs.subject = true;
+      if (!state.preheader.trim()) errs.preheader = true;
+    }
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      // Nothing gets outputted when a vital field is missing.
+      update({ generatedAmpscript: "", generatedDeckText: "" });
+      return;
+    }
     update({
       generatedDeckText: state.deckText,
       generatedAmpscript: generateAmpscript({
@@ -137,10 +169,14 @@ export default function ProductionPage() {
 
         <label>Job number</label>
         <input
-          className="field mono"
+          className={cls("field mono", "jobNumber")}
           type="text"
+          aria-invalid={errors.jobNumber || undefined}
           value={state.jobNumber}
-          onChange={(e) => update({ jobNumber: e.target.value })}
+          onChange={(e) => {
+            clearError("jobNumber");
+            update({ jobNumber: e.target.value });
+          }}
         />
         <output className="filename">
           <b>Small window — file name in SFMC (auto, from the job number)</b>
@@ -162,10 +198,14 @@ export default function ProductionPage() {
           <div>
             <label>A number</label>
             <input
-              className="field mono"
+              className={cls("field mono", "aNumber")}
               type="text"
+              aria-invalid={errors.aNumber || undefined}
               value={state.aNumber}
-              onChange={(e) => update({ aNumber: e.target.value })}
+              onChange={(e) => {
+                clearError("aNumber");
+                update({ aNumber: e.target.value });
+              }}
             />
           </div>
           <div>
@@ -184,19 +224,27 @@ export default function ProductionPage() {
             <div>
               <label>Subject line</label>
               <input
-                className="field"
+                className={cls("field", "subject")}
                 type="text"
+                aria-invalid={errors.subject || undefined}
                 value={state.subject}
-                onChange={(e) => update({ subject: e.target.value })}
+                onChange={(e) => {
+                  clearError("subject");
+                  update({ subject: e.target.value });
+                }}
               />
             </div>
             <div>
               <label>Preheader</label>
               <input
-                className="field"
+                className={cls("field", "preheader")}
                 type="text"
+                aria-invalid={errors.preheader || undefined}
                 value={state.preheader}
-                onChange={(e) => update({ preheader: e.target.value })}
+                onChange={(e) => {
+                  clearError("preheader");
+                  update({ preheader: e.target.value });
+                }}
               />
             </div>
           </div>
@@ -216,23 +264,27 @@ export default function ProductionPage() {
                       Subject — {keycode}
                     </label>
                     <input
-                      className="field"
+                      className={cls("field", `subject:${keycode}`)}
                       type="text"
+                      aria-invalid={errors[`subject:${keycode}`] || undefined}
                       value={state.perKeycode[keycode]?.subject ?? ""}
-                      onChange={(e) =>
-                        setPerKeycode(keycode, "subject", e.target.value)
-                      }
+                      onChange={(e) => {
+                        clearError(`subject:${keycode}`);
+                        setPerKeycode(keycode, "subject", e.target.value);
+                      }}
                     />
                   </div>
                   <div>
                     <label>Preheader — {keycode}</label>
                     <input
-                      className="field"
+                      className={cls("field", `preheader:${keycode}`)}
                       type="text"
+                      aria-invalid={errors[`preheader:${keycode}`] || undefined}
                       value={state.perKeycode[keycode]?.preheader ?? ""}
-                      onChange={(e) =>
-                        setPerKeycode(keycode, "preheader", e.target.value)
-                      }
+                      onChange={(e) => {
+                        clearError(`preheader:${keycode}`);
+                        setPerKeycode(keycode, "preheader", e.target.value);
+                      }}
                     />
                   </div>
                 </div>
@@ -261,6 +313,27 @@ export default function ProductionPage() {
           placeholder="Paste the copy deck text here — a blank line starts a new series of paragraphs…"
         />
 
+        {Object.keys(errors).length > 0 ? (
+          <div className="errorbar">
+            ✗ Vital field{Object.keys(errors).length > 1 ? "s" : ""} missing:{" "}
+            {Object.keys(errors)
+              .map((k) =>
+                k === "jobNumber"
+                  ? "Job number"
+                  : k === "aNumber"
+                    ? "A number"
+                    : k.startsWith("subject:")
+                      ? `Subject line (${k.slice(8)})`
+                      : k.startsWith("preheader:")
+                        ? `Preheader (${k.slice(10)})`
+                        : k === "subject"
+                          ? "Subject line"
+                          : "Preheader"
+              )
+              .join(", ")}{" "}
+            — nothing was output.
+          </div>
+        ) : null}
         <button className="btn" type="button" onClick={generate}>
           GENERATE OUTPUT
         </button>
