@@ -39,7 +39,9 @@ describe("dynamic generation vs the golden example", () => {
   it("matches the golden file except each branch carries its OWN A number", () => {
     // The golden example (approved 2026-10-19) used one A number in all
     // branches; the 2026-10-20 ruling supersedes that single point.
-    // Everything else must still match byte for byte.
+    // The fixture's content keys also use the 50-character description
+    // segment the owner set on 2026-10-28. Everything else must still
+    // match byte for byte.
     // Rebuild expected by replacing the A occurrences in branch order.
     const parts = golden.split('SET @aNumber = "A57222IFP-EM5-(multi)_1026"');
     expect(parts).toHaveLength(4); // 3 branches => 4 segments
@@ -91,19 +93,19 @@ describe("dynamic generation vs the golden example", () => {
 
   it("builds content keys as baseName+keycode+type with NO underscores between components", () => {
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSACMarquee")'
+      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSACMarquee")'
     );
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBSDcontentONE")'
+      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSDcontentONE")'
     );
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBLOC_PLcontentTWO")'
+      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamLOC_PLcontentTWO")'
     );
   });
 
   it("uses the same no-keycode Disclaimer key in every branch", () => {
     const matches = out.match(
-      /ContentBlockByKey\("REF4113200_EM5_2027_OE_IFP_WinBDisclaimer"\)/g
+      /ContentBlockByKey\("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_\(dynamDisclaimer"\)/g
     );
     expect(matches).toHaveLength(3);
   });

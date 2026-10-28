@@ -101,7 +101,7 @@ describe("app flow — Production ↔ QA gate", () => {
       },
     });
     expect(fileNameOut?.textContent).toContain(
-      "REF4113200_EM5_2027_OE_IFP_WinB"
+      "REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynam"
     );
     const keycodesInput = () =>
       screen.queryByDisplayValue("SAC, SD, LOC_PL");
@@ -124,11 +124,11 @@ describe("app flow — Production ↔ QA gate", () => {
       target: { value: WINBACK_LINE.replace("EM5", "EM9") },
     });
     expect(fileNameOut?.textContent).toContain(
-      "REF4113200_EM9_2027_OE_IFP_WinB"
+      "REF4113200_EM9_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynam"
     );
     fireEvent.change(jobInput, { target: { value: WINBACK_LINE } });
     expect(fileNameOut?.textContent).toContain(
-      "REF4113200_EM5_2027_OE_IFP_WinB"
+      "REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynam"
     );
 
     // --- Generate: Window 1 (golden structure) and Window 2 (separate) ---

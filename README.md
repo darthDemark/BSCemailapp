@@ -84,11 +84,12 @@ in the small window directly under it:
 
 ```
 EM5 2027 OE IFP WinBack Email 5 More Choice (dynamic) 12/22 - REF4113200 …
-        →  REF4113200_EM5_2027_OE_IFP_WinB
+        →  REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynam
 ```
 
 Ref number first, then `_`, then the description from the **beginning**
-of the line, words underscore-joined, **hard cut at 20 characters**.
+of the line, words underscore-joined, **hard cut at 50 characters**
+(raised from 20 by the owner on 2026-10-28).
 This names the file **in SFMC** — it is not a local file and carries no
 extension. In the AMPscript, `@refNumber` gets the **plain ref number
 only**.

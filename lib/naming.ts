@@ -5,11 +5,14 @@
  *   (refnumber)_(description segment)
  * - the ref number comes first, then an underscore;
  * - the description segment is taken from the BEGINNING of the job line,
- *   words separated by underscores, HARD cut at 20 characters
- *   (mid-word cut allowed — worked example: "WinBack" → "WinB");
+ *   words separated by underscores, HARD cut at 50 characters
+ *   (the limit was raised from 20 by the owner on 2026-10-28);
  * - the resulting name is the name of the file IN SFMC when building.
  *   It is not a local file name and carries NO extension.
  */
+
+/** Maximum length of the description segment in the SFMC file name. */
+export const DESCRIPTION_SEGMENT_LIMIT = 50;
 
 /** Extract the first REF<number> token from a job line, e.g. "REF4113200". */
 export function extractRef(jobLine: string): string {
@@ -18,19 +21,20 @@ export function extractRef(jobLine: string): string {
 }
 
 /**
- * The 20-character description segment: text from the beginning of the
+ * The 50-character description segment: text from the beginning of the
  * job line (everything before the ref token), words underscore-joined,
- * hard-cut at 20 characters.
+ * hard-cut at 50 characters.
  */
 export function descriptionSegment(jobLine: string): string {
   const refMatch = jobLine.match(/REF\d+/i);
   const beginning = refMatch ? jobLine.slice(0, refMatch.index) : jobLine;
   const words = beginning.trim().split(/\s+/).filter(Boolean);
-  return words.join("_").slice(0, 20);
+  return words.join("_").slice(0, DESCRIPTION_SEGMENT_LIMIT);
 }
 
 /**
- * Full SFMC file/base name, e.g. "REF4113200_EM5_2027_OE_IFP_WinB".
+ * Full SFMC file/base name, e.g.
+ * "REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynam".
  * Returns "" when the line contains no ref number.
  */
 export function deriveSfmcName(jobLine: string): string {
