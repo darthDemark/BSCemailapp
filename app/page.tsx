@@ -404,14 +404,6 @@ export default function ProductionPage() {
             Add copy deck
           </button>
         </div>
-        <div className="deckline">
-          Mark each area of a deck with the bracket label its component
-          carries — [HEADLINE], [marquee copy], [text1], [Header1],
-          [bullet 1 a], [disclaimer1] — and GENERATE OUTPUT replaces
-          every bracket variable in the called component templates with
-          that area's copy. Window 1 is the primary deck (Window 2 +
-          Content QA); every window builds its own component blocks.
-        </div>
 
         {deckEntries.map((deck, index) => (
           <div className="deckcard" key={deck.id}>
