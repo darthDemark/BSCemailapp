@@ -171,6 +171,8 @@ const GROUP_ALIASES: Record<string, Record<string, string[]>> = {
   },
 };
 
+const END_PATTERN = /\[\s*END\s*\]/i;
+
 export type BracketSections = Map<string, string[]>;
 
 export interface DeckRecord {
@@ -197,28 +199,66 @@ export function normalizeFileKey(name: string): string {
     .replace(/[^a-z0-9-]+/g, "");
 }
 
-const RECORD_PATTERN =
-  /\[\s*([^\[\]\n]{1,120}?)\s*\[\s*([^\[\]\n]{1,100}?)\s*\]\s*\]\s*([\s\S]*?)\[\s*END\s*\]/gi;
+const RECORD_MARKER_PATTERN =
+  /\[\s*([^\[\]\n]{1,120}?)\s*\[\s*([^\[\]\n]{1,100}?)\s*\]\s*\]/g;
+
+/** A record marker names a file: it must resolve to a known object or
+ *  at least look like a file name, so bracketed asides inside copy
+ *  don't split records. */
+function isFileLikeMarker(rawName: string, fileKey: string): boolean {
+  if (findTemplateByFileKey(fileKey)) return true;
+  return /\.html?$/i.test(rawName.trim()) || rawName.includes("-");
+}
 
 /**
  * Parse a deck's records: [file name [variable]] copy [END].
- * The copy is everything between the marker and [END] — the content
- * in the middle, brackets and all. Records whose copy is empty are
- * dropped.
+ *
+ * A record runs from its marker to the NEXT record marker, to an
+ * [END], or to the end of the deck — whichever comes first (the
+ * owner's real decks, e.g. com-1.docx, write the marker as
+ * "[component-2-b.html [bullet 1 a] ]" with the copy on the same line
+ * and no [END] per record). [END] is a terminator when present, never
+ * a requirement, and marker text can therefore never land inside a
+ * record's copy.
  */
 export function parseDeckRecords(text: string): DeckRecord[] {
-  const records: DeckRecord[] = [];
-  for (const match of text.matchAll(RECORD_PATTERN)) {
-    const copy = match[3].trim();
-    if (!copy) continue;
-    records.push({
+  const markers: {
+    fileName: string;
+    fileKey: string;
+    variable: string;
+    variableKey: string;
+    start: number;
+    end: number;
+  }[] = [];
+  for (const match of text.matchAll(RECORD_MARKER_PATTERN)) {
+    const fileKey = normalizeFileKey(match[1]);
+    if (!isFileLikeMarker(match[1], fileKey)) continue;
+    markers.push({
       fileName: match[1].trim(),
-      fileKey: normalizeFileKey(match[1]),
+      fileKey,
       variable: match[2].trim(),
       variableKey: normalizeLabelKey(match[2]),
-      copy,
+      start: match.index ?? 0,
+      end: (match.index ?? 0) + match[0].length,
     });
   }
+  const records: DeckRecord[] = [];
+  markers.forEach((marker, i) => {
+    const stop =
+      i + 1 < markers.length ? markers[i + 1].start : text.length;
+    let copy = text.slice(marker.end, stop);
+    const endAt = copy.search(END_PATTERN);
+    if (endAt >= 0) copy = copy.slice(0, endAt);
+    copy = copy.trim();
+    if (!copy) return;
+    records.push({
+      fileName: marker.fileName,
+      fileKey: marker.fileKey,
+      variable: marker.variable,
+      variableKey: marker.variableKey,
+      copy,
+    });
+  });
   return records;
 }
 
@@ -237,6 +277,8 @@ export function findTemplateByFileKey(
 }
 
 function cleanSectionValue(raw: string): string {
+  const endAt = raw.search(END_PATTERN);
+  if (endAt >= 0) raw = raw.slice(0, endAt);
   return raw
     .replace(/^[\s:;,.—–-]+/, "")
     .replace(/\s+$/, "")

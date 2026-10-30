@@ -149,8 +149,12 @@ Care that comes to you
 
 The record names the template object (`templates/components/`,
 registry in `lib/componentBuild.ts`) and the variable; the copy
-between the marker and `[END]` — the content in the middle —
-replaces that variable in that object at GENERATE OUTPUT. The file
+after the marker — the content in the middle — replaces that
+variable in that object at GENERATE OUTPUT. A record runs to the
+next record marker, an `[END]`, or the end of the deck, whichever
+comes first: `[END]` is a terminator when present, never a
+requirement (real decks write `[component-2-b.html [bullet 1 a] ]`
+with the copy on the same line and no `[END]` per record). The file
 name, the bracketed variable marker and the `[END]` are deck-side
 only and never appear in the built output. A deck may name both
 marquee files (both get built); a record naming a file the app

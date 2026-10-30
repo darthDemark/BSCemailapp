@@ -340,3 +340,64 @@ describe("record grammar (owner's correction, 2026-10-30)", () => {
     expect(build.components.map((c) => c.name)).toEqual(["Content 1"]);
   });
 });
+
+// The owner's real deck format, taken from his 2026-10-30 screenshot
+// of com-1.docx: marker "[file.html [variable] ]", copy on the same
+// line, NO [END] per record. The previous parser demanded an [END]
+// after every copy, so marker text leaked into the built blocks and
+// neighbouring variables went unfilled.
+const SCREENSHOT_DECK = `[component-2-b.html [Header a] ] Choose what's best for you:
+[component-2-b.html [bullet 1 a] ] Home visit: Have a clinician come to you.
+[component-2-b.html [bullet 2 a] ] Virtual appointment: Connect with a clinician by secure video call.
+[component-2-b.html [Header b] ] Why do it?
+[component-2-b.html [bullet 1 b] ] Help catch health issues early or prevent them.
+[component-2-b.html [bullet 2 b] ] Stay ahead of problems before they start.`;
+
+describe("record grammar — the owner's real deck format (screenshot, 2026-10-30)", () => {
+  const build = buildComponentsForDeck({
+    id: "deck-s",
+    name: "com-1.docx",
+    text: SCREENSHOT_DECK,
+  });
+  const content2 = build.components.find((c) => c.groupId === "content2");
+
+  it("parses markers with .html, a space before the closing bracket, and no [END]", () => {
+    const records = parseDeckRecords(SCREENSHOT_DECK);
+    expect(records).toHaveLength(6);
+    expect(records[1]).toMatchObject({
+      fileKey: "component-2-b",
+      variableKey: "bullet1a",
+      copy: "Home visit: Have a clinician come to you.",
+    });
+  });
+
+  it("fills every variable the records name", () => {
+    expect(content2).toBeTruthy();
+    expect(content2!.html).toContain("Choose what's best for you:");
+    expect(content2!.html).toContain(
+      "Home visit: Have a clinician come to you."
+    );
+    expect(content2!.html).toContain(
+      "Virtual appointment: Connect with a clinician by secure video call."
+    );
+    expect(content2!.html).toContain("Why do it?");
+    expect(content2!.html).toContain(
+      "Help catch health issues early or prevent them."
+    );
+    expect(content2!.missingLabels).not.toContain("bullet 1 a");
+    expect(content2!.missingLabels).not.toContain("bullet 1 b");
+    expect(content2!.missingLabels).not.toContain("bullet 2 b");
+  });
+
+  it("no marker text, file name, or [END] leaks into the built block", () => {
+    expect(content2!.html).not.toContain("[bullet 1 a]");
+    expect(content2!.html).not.toContain("component-2-b.html");
+    expect(content2!.html).not.toContain("[END]");
+  });
+
+  it("an [END] only at the very end of the deck still parses every record", () => {
+    const records = parseDeckRecords(`${SCREENSHOT_DECK}\n[END]`);
+    expect(records).toHaveLength(6);
+    expect(records[5].copy).toBe("Stay ahead of problems before they start.");
+  });
+});
