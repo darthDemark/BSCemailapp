@@ -153,9 +153,11 @@ registry in `lib/componentBuild.ts`) with that area's copy:
 | Disclaimer | `disclaimer-component.html` |
 
 The variant called is the one whose own labels the deck provides;
-only groups with matching labels are built. Repeated labels (the two
-`[Header]` areas in component-2-b) consume repeated deck areas in
-order. Copy is HTML-escaped into the styled slots; a label with no
+only groups with matching labels are built. Repeated labels consume
+repeated deck areas in order (component-2-b originally leaned on
+this with two `[Header]` areas; the owner's 2026-10-30 revision of
+that file gives each block its own label — `[Header a]` through
+`[Header d]`). Copy is HTML-escaped into the styled slots; a label with no
 deck copy stays visible in the block and is named in a warning —
 nothing is silently blanked. The disclaimer's AMPscript (`%%…%%`)
 passes through untouched.

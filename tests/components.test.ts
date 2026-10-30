@@ -71,15 +71,17 @@ Alpha header
 Alpha bullet one
 [bullet 2 a]
 Alpha bullet two
-[Header]
-Second generic header
+[Header b]
+Second header
 [bullet 1 b]
 Beta bullet one
 [bullet 2 b]
 Beta bullet two
+[Header c]
+Third header
 [content 1 a]
 Content one a copy.
-[Header b]
+[Header d]
 Beta header
 [content 1 b]
 Content one b copy.
@@ -96,11 +98,8 @@ describe("bracket section parsing", () => {
   });
 
   it("keeps repeated labels as ordered values", () => {
-    const sections = parseBracketSections(DECK_B);
-    expect(sections.get("header")).toEqual([
-      "Marquee generic header",
-      "Second generic header",
-    ]);
+    const sections = parseBracketSections("[Header]\nOne\n[Header]\nTwo");
+    expect(sections.get("header")).toEqual(["One", "Two"]);
   });
 
   it("extracts template placeholders, skipping Outlook conditionals", () => {
@@ -171,12 +170,13 @@ describe("component building — deck B calls variant 2 / B objects", () => {
     expect(content2?.missingLabels).toEqual([]);
   });
 
-  it("fills repeated [Header] placeholders from repeated deck areas, in order", () => {
+  it("fills the distinct [Header a]-[Header d] areas in order (owner's revision, 2026-10-30)", () => {
     const content2 = build.components.find((c) => c.groupId === "content2")!;
-    const first = content2.html.indexOf("Marquee generic header");
-    const second = content2.html.indexOf("Second generic header");
-    expect(first).toBeGreaterThan(-1);
-    expect(second).toBeGreaterThan(first);
+    const positions = ["Alpha header", "Second header", "Third header", "Beta header"].map(
+      (h) => content2.html.indexOf(h)
+    );
+    expect(positions.every((pos) => pos > -1)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 });
 
