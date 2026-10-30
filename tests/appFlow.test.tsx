@@ -55,8 +55,8 @@ describe("app flow — Production ↔ QA gate", () => {
     const fileNameOut = container.querySelector("output.filename");
     expect(fileNameOut?.textContent).not.toContain("REF4113200");
     const winBodies = container.querySelectorAll(".winbody");
+    expect(winBodies).toHaveLength(1);
     expect(winBodies[0]?.textContent?.trim()).toBe("");
-    expect(winBodies[1]?.textContent?.trim()).toBe("");
 
     // --- Fill the WinBack job in by hand ---
     const monoInputs = () =>
@@ -139,10 +139,9 @@ describe("app flow — Production ↔ QA gate", () => {
     const win1 = container.querySelector(".win.dark .winbody pre");
     expect(win1?.textContent).toContain('SET @refNumber = "REF4113200"');
     expect(win1?.textContent?.match(/ContentBlockByKey/g)).toHaveLength(12);
-    const win2 = container.querySelector(".win.light .winbody");
-    expect(win2?.textContent).toContain("first in series → mar-0T--G");
-    expect(win2?.textContent).toContain("stand-alone → mar-0TB--G");
-    expect(container.querySelectorAll(".win")).toHaveLength(2);
+    // Window 2 retired (owner's correction, 2026-10-30): the Component
+    // HTML Output replaces it; Window 1 stretches across alone.
+    expect(container.querySelectorAll(".win")).toHaveLength(1);
 
     // --- Gate starts LOCKED on both pages' deliverable bars ---
     const filerows = () =>
@@ -376,10 +375,22 @@ describe("component decks (owner's design, 2026-10-29)", () => {
       )!;
     expect(compBtn("Marquee component")).toBeTruthy();
     expect(compBtn("Disclaimer")).toBeTruthy();
+    // EVERY deck gets its own buttons (owner's correction, 2026-10-30):
+    // two decks built Content 1, so two Content 1 buttons exist.
+    const content1Btns = Array.from(
+      container.querySelectorAll(".compbtn")
+    ).filter((b) => b.textContent?.includes("Content 1"));
+    expect(content1Btns).toHaveLength(2);
     await user.click(compBtn("Content 1"));
     const code = container.querySelector(".componentcode");
     expect(code?.textContent).toContain("Intro copy one.");
     expect(code?.textContent).not.toContain("[text1]");
+    await user.click(content1Btns[1]);
+    expect(code?.textContent).toContain("Intro copy two.");
+    // After the blocks render, the Preview button pops up.
+    const previewLink =
+      container.querySelector<HTMLAnchorElement>("a.previewlink");
+    expect(previewLink?.getAttribute("href")).toBe("/preview");
 
     // Preview page: two builds, arrows shift between them.
     const frame = () =>

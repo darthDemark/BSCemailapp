@@ -19,8 +19,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <TopBar />
             {children}
             <div className="foot">
-              Production and QA are separate pages. Windows 1 and 2 stay
-              separate. Text Format QA compares against the guide
+              Production and QA are separate pages. Window 1 is the
+              AMPscript output; the Component HTML Output below it
+              carries the built blocks, and Page 3 renders the preview.
+              Text Format QA compares against the guide
               (text-formatting-guide.html); Content QA compares against
               the copy deck provided. Both must pass.
             </div>

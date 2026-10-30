@@ -19,12 +19,20 @@ import { escapeHtml } from "./copyDeck";
  *   Content 2         — component-2-a.html / component-2-b.html
  *   Disclaimer        — disclaimer-component.html
  *
- * A copy deck marks its areas with the same bracket labels the
- * templates carry — [HEADLINE], [marquee copy], [text1], [Header1],
- * [bullet 1 a], [disclaimer1], … The content that follows a label in
- * the deck replaces that label everywhere it appears in the called
- * template. Only a bracket label starts a new copy area: every other
- * character is content.
+ * A copy deck marks its areas with RECORDS in the owner's format
+ * (corrected by the owner, 2026-10-30):
+ *
+ *   [file name [variable]] copy [END]
+ *
+ * The record names the template object and the variable; the copy
+ * between the marker and [END] — the content in the middle — replaces
+ * that variable in that object. The file name, the bracketed variable
+ * marker and the [END] are deck-side only: NONE of them appear in
+ * the built output.
+ *
+ * Decks written label-first ([HEADLINE] copy [text1] copy …) still
+ * build through the label fallback below, with the called variant
+ * chosen by which labels the deck provides.
  */
 
 export const MAX_DECK_WINDOWS = 7;
@@ -165,6 +173,69 @@ const GROUP_ALIASES: Record<string, Record<string, string[]>> = {
 
 export type BracketSections = Map<string, string[]>;
 
+export interface DeckRecord {
+  /** File named in the record, as written in the deck. */
+  fileName: string;
+  /** Canonical file key (see normalizeFileKey). */
+  fileKey: string;
+  /** Variable named in the record, as written in the deck. */
+  variable: string;
+  /** Canonical variable key (see normalizeLabelKey). */
+  variableKey: string;
+  /** The copy in the middle — between the marker and [END]. */
+  copy: string;
+}
+
+/** Canonical key for a component file name: case, spacing, underscores
+ *  and the .html extension don't matter. */
+export function normalizeFileKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\.html?$/, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/[^a-z0-9-]+/g, "");
+}
+
+const RECORD_PATTERN =
+  /\[\s*([^\[\]\n]{1,120}?)\s*\[\s*([^\[\]\n]{1,100}?)\s*\]\s*\]\s*([\s\S]*?)\[\s*END\s*\]/gi;
+
+/**
+ * Parse a deck's records: [file name [variable]] copy [END].
+ * The copy is everything between the marker and [END] — the content
+ * in the middle, brackets and all. Records whose copy is empty are
+ * dropped.
+ */
+export function parseDeckRecords(text: string): DeckRecord[] {
+  const records: DeckRecord[] = [];
+  for (const match of text.matchAll(RECORD_PATTERN)) {
+    const copy = match[3].trim();
+    if (!copy) continue;
+    records.push({
+      fileName: match[1].trim(),
+      fileKey: normalizeFileKey(match[1]),
+      variable: match[2].trim(),
+      variableKey: normalizeLabelKey(match[2]),
+      copy,
+    });
+  }
+  return records;
+}
+
+/** The template object a deck record names, by file key. */
+export function findTemplateByFileKey(
+  fileKey: string
+): { group: ComponentGroup; template: ComponentTemplateObject } | null {
+  for (const group of COMPONENT_GROUPS) {
+    for (const template of group.variants) {
+      if (normalizeFileKey(template.fileName) === fileKey) {
+        return { group, template };
+      }
+    }
+  }
+  return null;
+}
+
 function cleanSectionValue(raw: string): string {
   return raw
     .replace(/^[\s:;,.—–-]+/, "")
@@ -301,8 +372,81 @@ function chooseVariant(
   return best?.template ?? null;
 }
 
-/** Build every component block one copy deck calls for, in email order. */
+/**
+ * Build every component block one copy deck calls for, in email
+ * order. Record-format decks build exactly the objects they name;
+ * label-format decks fall back to label matching.
+ */
 export function buildComponentsForDeck(deck: DeckEntry): ComponentBuild {
+  const records = parseDeckRecords(deck.text);
+  if (records.length > 0) return buildFromRecords(deck, records);
+  return buildFromLabels(deck);
+}
+
+function buildFromRecords(
+  deck: DeckEntry,
+  records: DeckRecord[]
+): ComponentBuild {
+  const warnings: string[] = [];
+  const components: BuiltComponent[] = [];
+
+  // Group the records by the object they name.
+  const byTemplate = new Map<string, BracketSections>();
+  const unknownFiles: string[] = [];
+  for (const record of records) {
+    const found = findTemplateByFileKey(record.fileKey);
+    if (!found) {
+      if (!unknownFiles.includes(record.fileName)) {
+        unknownFiles.push(record.fileName);
+      }
+      continue;
+    }
+    let sections = byTemplate.get(found.template.id);
+    if (!sections) {
+      sections = new Map();
+      byTemplate.set(found.template.id, sections);
+    }
+    const existing = sections.get(record.variableKey);
+    if (existing) existing.push(record.copy);
+    else sections.set(record.variableKey, [record.copy]);
+  }
+  if (unknownFiles.length > 0) {
+    warnings.push(
+      `This deck names file(s) the app doesn't carry: ${unknownFiles.join(", ")} — those areas were skipped.`
+    );
+  }
+
+  for (const group of COMPONENT_GROUPS) {
+    for (const template of group.variants) {
+      const sections = byTemplate.get(template.id);
+      if (!sections) continue;
+      const filled = fillTemplate(template, sections);
+      if (filled.matchedLabels.length === 0) {
+        warnings.push(
+          `The deck's records for ${template.fileName} name variables that file doesn't carry — nothing was built from them.`
+        );
+        continue;
+      }
+      components.push({
+        id: `${deck.id}-${group.id}-${template.id}`,
+        groupId: group.id,
+        name: group.name,
+        fileName: template.fileName,
+        html: filled.html,
+        matchedLabels: filled.matchedLabels,
+        missingLabels: filled.missingLabels,
+      });
+    }
+  }
+
+  if (components.length === 0 && warnings.length === 0) {
+    warnings.push("No component blocks were built from this deck's records.");
+  }
+
+  return { id: deck.id, deckName: deck.name, components, warnings };
+}
+
+function buildFromLabels(deck: DeckEntry): ComponentBuild {
   const sections = parseBracketSections(deck.text);
   const components: BuiltComponent[] = [];
   const warnings: string[] = [];

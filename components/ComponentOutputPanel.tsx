@@ -1,38 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { ComponentBuild } from "@/lib/componentBuild";
 
 interface ComponentOutputPanelProps {
   builds: ComponentBuild[];
   selectedBuildId: string;
   selectedComponentId: string;
-  onSelectBuild: (id: string) => void;
-  onSelectComponent: (id: string) => void;
+  onSelect: (buildId: string, componentId: string) => void;
 }
 
 /**
- * The window that appears below Generate with the built component
- * blocks (owner's design, 2026-10-29): one button per component block
- * — tap it to view that block's HTML and copy it.
+ * The Component HTML Output (owner's design, 2026-10-29; corrected
+ * 2026-10-30): it replaces the old Window 2. EVERY deck gets its own
+ * row of buttons leading to its built blocks — tap one to view that
+ * block's HTML and copy it. Once blocks are rendered, a button to
+ * the Preview page appears at the bottom.
  */
 export function ComponentOutputPanel({
   builds,
   selectedBuildId,
   selectedComponentId,
-  onSelectBuild,
-  onSelectComponent,
+  onSelect,
 }: ComponentOutputPanelProps) {
-  const build =
-    builds.find((b) => b.id === selectedBuildId) ?? builds[0];
+  const selectedBuild =
+    builds.find((b) => b.id === selectedBuildId) ??
+    builds.find((b) => b.components.length > 0) ??
+    builds[0];
   const component =
-    build.components.find((c) => c.id === selectedComponentId) ??
-    build.components[0];
+    selectedBuild.components.find((c) => c.id === selectedComponentId) ??
+    selectedBuild.components[0];
+  const anyComponents = builds.some((b) => b.components.length > 0);
 
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     setCopied(false);
-  }, [component?.id, build.id]);
+  }, [component?.id, selectedBuild.id]);
 
   const copy = async () => {
     if (!component) return;
@@ -49,52 +53,47 @@ export function ComponentOutputPanel({
     <section className="componentpanel" aria-label="Component HTML output">
       <div className="componentpanelhead">
         COMPONENT HTML OUTPUT — BUILT BLOCKS
-        <span>
-          bracket variables replaced with the deck&apos;s copy
-        </span>
+        <span>bracket variables replaced with the deck&apos;s copy</span>
       </div>
       <div className="componentpanelbody">
-        {builds.length > 1 ? (
-          <div className="buildtabs" role="tablist" aria-label="Copy decks">
-            {builds.map((b, i) => (
-              <button
-                key={b.id}
-                type="button"
-                role="tab"
-                aria-selected={b.id === build.id}
-                className={b.id === build.id ? "buildtab on" : "buildtab"}
-                onClick={() => onSelectBuild(b.id)}
-              >
-                Deck {i + 1} · {b.deckName}
-              </button>
+        {builds.map((build, buildIndex) => (
+          <div className="deckblocks" key={build.id}>
+            <div className="deckblockshead">
+              DECK {buildIndex + 1} — {build.deckName}
+            </div>
+            {build.warnings.map((warning) => (
+              <div className="deckline warnline" key={warning}>
+                ⚠ {warning}
+              </div>
             ))}
-          </div>
-        ) : null}
-
-        {build.warnings.map((warning) => (
-          <div className="deckline warnline" key={warning}>
-            ⚠ {warning}
+            {build.components.length > 0 ? (
+              <div className="componenttabs">
+                {build.components.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={
+                      selectedBuild.id === build.id && component?.id === c.id
+                        ? "compbtn on"
+                        : "compbtn"
+                    }
+                    onClick={() => onSelect(build.id, c.id)}
+                  >
+                    {c.name}
+                    <span>{c.fileName}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         ))}
 
         {component ? (
           <>
-            <div className="componenttabs">
-              {build.components.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={c.id === component.id ? "compbtn on" : "compbtn"}
-                  onClick={() => onSelectComponent(c.id)}
-                >
-                  {c.name}
-                  <span>{c.fileName}</span>
-                </button>
-              ))}
-            </div>
             <div className="componentcodehead">
               <span>
-                {component.name} — {component.fileName}
+                {selectedBuild.deckName} — {component.name} —{" "}
+                {component.fileName}
               </span>
               <button type="button" className="copybtn dark" onClick={copy}>
                 {copied ? "✓ Copied" : "Copy HTML"}
@@ -111,6 +110,14 @@ export function ComponentOutputPanel({
               </div>
             ) : null}
           </>
+        ) : null}
+
+        {anyComponents ? (
+          <div className="previewcta">
+            <Link className="btn previewlink" href="/preview">
+              PREVIEW ALL BUILDS →
+            </Link>
+          </div>
         ) : null}
       </div>
     </section>

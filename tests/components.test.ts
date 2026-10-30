@@ -9,6 +9,7 @@ import {
   buildComponentsForDeck,
   extractPlaceholders,
   parseBracketSections,
+  parseDeckRecords,
 } from "@/lib/componentBuild";
 
 const DECK_A = `
@@ -202,5 +203,140 @@ describe("component building — gaps stay visible", () => {
     expect(marquee!.missingLabels).toContain("marquee copy");
     expect(marquee!.html).toContain("[marquee copy]");
     expect(build.components).toHaveLength(1);
+  });
+});
+
+const RECORD_DECK = `
+[marquee-component-1 [HEADLINE]]
+Care that comes to you
+[END]
+[marquee-component-1 [marquee copy]]
+Get your checkup at home.
+[END]
+[marquee-component-1 [CTA NAME]]
+Schedule now
+[END]
+[marquee-component-1 [CTALINK]]
+https://example.com/schedule
+[END]
+[component-1-a [text1]]
+Intro copy here.
+[END]
+[component-2-b [Header a]]
+Alpha header
+[END]
+[component-2-b [bullet 1 a]]
+Alpha bullet one
+[END]
+[component-2-b [bullet 2 a]]
+Alpha bullet two
+[END]
+[component-2-b [Header b]]
+Second header
+[END]
+[component-2-b [bullet 1 b]]
+Beta bullet one
+[END]
+[component-2-b [bullet 2 b]]
+Beta bullet two
+[END]
+[component-2-b [Header c]]
+Third header
+[END]
+[component-2-b [content 1 a]]
+Content one a copy.
+[END]
+[component-2-b [Header d]]
+Beta header
+[END]
+[component-2-b [content 1 b]]
+Content one b copy.
+[END]
+[disclaimer-component [disclaimer1]]
+Legal copy here.
+[END]
+`;
+
+describe("record grammar (owner's correction, 2026-10-30)", () => {
+  it("parses [file name [variable]] copy [END] records", () => {
+    const records = parseDeckRecords(RECORD_DECK);
+    expect(records).toHaveLength(16);
+    expect(records[0]).toMatchObject({
+      fileKey: "marquee-component-1",
+      variableKey: "headline",
+      copy: "Care that comes to you",
+    });
+  });
+
+  it("builds exactly the objects the deck names", () => {
+    const build = buildComponentsForDeck({
+      id: "deck-r",
+      name: "Record deck",
+      text: RECORD_DECK,
+    });
+    expect(build.components.map((c) => c.name)).toEqual([
+      "Marquee component",
+      "Content 1",
+      "Content 2",
+      "Disclaimer",
+    ]);
+    expect(build.components[0].fileName).toBe("marquee-component-1.html");
+    expect(build.components[2].fileName).toBe("component-2-b.html");
+    expect(
+      build.components.every((c) => c.missingLabels.length === 0)
+    ).toBe(true);
+    expect(build.components[0].html).toContain("Care that comes to you");
+    expect(build.components[2].html).toContain("Beta header");
+  });
+
+  it("keeps the file name, the variable marker and [END] OUT of the output", () => {
+    const build = buildComponentsForDeck({
+      id: "deck-r",
+      name: "Record deck",
+      text: RECORD_DECK,
+    });
+    for (const c of build.components) {
+      expect(c.html).not.toContain("[END]");
+      expect(c.html).not.toContain("[HEADLINE]");
+      expect(c.html).not.toContain("marquee-component-1");
+      expect(c.html).not.toContain("component-2-b");
+      expect(c.html).not.toContain("disclaimer-component");
+    }
+  });
+
+  it("keeps brackets inside the copy itself", () => {
+    const build = buildComponentsForDeck({
+      id: "deck-r2",
+      name: "Bracket copy",
+      text: "[component-1-a [text1]] Read the [draft] notes carefully [END]",
+    });
+    expect(build.components[0].html).toContain("Read the [draft] notes carefully");
+  });
+
+  it("builds both marquees when the deck names both files", () => {
+    const build = buildComponentsForDeck({
+      id: "deck-r3",
+      name: "Both marquees",
+      text:
+        "[marquee-component-1 [HEADLINE]] First headline [END]\n" +
+        "[marquee-component-2 [Header]] Second headline [END]",
+    });
+    const marquees = build.components.filter((c) => c.groupId === "marquee");
+    expect(marquees.map((c) => c.fileName)).toEqual([
+      "marquee-component-1.html",
+      "marquee-component-2.html",
+    ]);
+  });
+
+  it("warns on files the app doesn't carry and builds the rest", () => {
+    const build = buildComponentsForDeck({
+      id: "deck-r4",
+      name: "Unknown file",
+      text:
+        "[mystery-file [text1]] Boo [END]\n" +
+        "[component-1-a [text1]] Real copy [END]",
+    });
+    expect(build.warnings.join(" ")).toContain("mystery-file");
+    expect(build.components.map((c) => c.name)).toEqual(["Content 1"]);
   });
 });

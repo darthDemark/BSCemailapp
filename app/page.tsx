@@ -6,13 +6,7 @@ import { OutputWindow } from "@/components/OutputWindow";
 import { DeliverableBar } from "@/components/DeliverableBar";
 import { ComponentOutputPanel } from "@/components/ComponentOutputPanel";
 import { generateAmpscript } from "@/lib/ampscript";
-import {
-  parseDeckText,
-  pClassFor,
-  pClassLabel,
-  readDeckFile,
-  renderDeckHtml,
-} from "@/lib/copyDeck";
+import { readDeckFile } from "@/lib/copyDeck";
 import { parseKeycodes } from "@/lib/keycodes";
 import {
   buildComponentsForDeck,
@@ -45,12 +39,6 @@ export default function ProductionPage() {
     () => parseKeycodes(state.keycodesRaw),
     [state.keycodesRaw]
   );
-  const series = useMemo(
-    () => parseDeckText(state.generatedDeckText),
-    [state.generatedDeckText]
-  );
-  const deckHtml = useMemo(() => renderDeckHtml(series), [series]);
-
   const isDynamic = state.buildType === "dynamic";
   const isMulti = isDynamic && state.variant === "multi";
 
@@ -473,32 +461,6 @@ export default function ProductionPage() {
             ) : null}
           </OutputWindow>
 
-          <OutputWindow
-            title="WINDOW 2 — COPY DECK CONTENT OUTPUT (its own window)"
-            copyText={deckHtml || undefined}
-          >
-            {series.length === 0 ? null : (
-              series.map((paragraphs, si) => (
-                <div key={si}>
-                  {paragraphs.map((paragraph, pi) => {
-                    const cls = pClassFor(paragraphs.length, pi);
-                    return (
-                      <div className="deckpara" key={pi}>
-                        <code>
-                          {cls ? `<p class="${cls}">` : "<p>"}
-                        </code>{" "}
-                        {paragraph}{" "}
-                        <code>{"</p>"}</code>
-                        <span className={cls ? "chip" : "chip none"}>
-                          {pClassLabel(paragraphs.length, pi)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))
-            )}
-          </OutputWindow>
         </div>
 
         {state.componentBuilds.length > 0 ? (
@@ -506,11 +468,10 @@ export default function ProductionPage() {
             builds={state.componentBuilds}
             selectedBuildId={selectedBuildId}
             selectedComponentId={selectedComponentId}
-            onSelectBuild={(id) => {
-              setSelectedBuildId(id);
-              setSelectedComponentId("");
+            onSelect={(buildId, componentId) => {
+              setSelectedBuildId(buildId);
+              setSelectedComponentId(componentId);
             }}
-            onSelectComponent={setSelectedComponentId}
           />
         ) : null}
 

@@ -125,7 +125,7 @@ through untouched:
   WinBack inputs — that is the acceptance test, and it runs in the
   suite.
 
-### Copy deck → Window 2
+### Copy deck parsing (under Content QA)
 
 Paste the deck or upload a file (`.txt` / `.md` / `.html`; `.docx` via
 mammoth). A blank line starts a new series; each line is a paragraph.
@@ -134,40 +134,50 @@ its series dictates, per the p-class bible
 (`text-formatting-guide.html`): first `mar-0T--G`, middle **no class**,
 last `mar-0B--G`, stand-alone `mar-0TB--G`. Deck text is HTML-escaped.
 
-### Component building — bracket-labelled decks (2026-10-29)
+### Component building — deck records name the object (2026-10-29, corrected 2026-10-30)
 
 The Production page holds **up to 7 copy deck windows** (the styled
 **+ Add copy deck** button adds more; window 1 is the primary deck —
-the one Window 2 and Content QA use). A deck marks its areas with the
-bracket labels the component templates carry — `[HEADLINE]`,
-`[marquee copy]`, `[text1]`, `[Header1]`, `[bullet 1 a]`,
-`[disclaimer1]`, … — and GENERATE OUTPUT replaces every bracket
-variable in the called component objects (`templates/components/`,
-registry in `lib/componentBuild.ts`) with that area's copy:
+the one Content QA reads). A deck marks its areas with **records**
+in the owner's format:
 
-| Block | Objects (the deck's labels choose) |
+```
+[marquee-component-1 [HEADLINE]]
+Care that comes to you
+[END]
+```
+
+The record names the template object (`templates/components/`,
+registry in `lib/componentBuild.ts`) and the variable; the copy
+between the marker and `[END]` — the content in the middle —
+replaces that variable in that object at GENERATE OUTPUT. The file
+name, the bracketed variable marker and the `[END]` are deck-side
+only and never appear in the built output. A deck may name both
+marquee files (both get built); a record naming a file the app
+doesn't carry is skipped with a warning. Decks written label-first
+(`[HEADLINE]` copy `[text1]` copy …) still build through a label
+fallback, with the called variant chosen by which labels the deck
+provides. Copy is HTML-escaped into the styled slots; a variable
+with no deck copy stays visible in the block and is named in a
+warning — nothing is silently blanked. The disclaimer's AMPscript
+(`%%…%%`) passes through untouched.
+
+| Block | Objects |
 |---|---|
 | Marquee component | `marquee-component-1.html` / `marquee-component-2.html` |
 | Content 1 | `component-1-a.html` |
 | Content 2 | `component-2-a.html` / `component-2-b.html` |
 | Disclaimer | `disclaimer-component.html` |
 
-The variant called is the one whose own labels the deck provides;
-only groups with matching labels are built. Repeated labels consume
-repeated deck areas in order (component-2-b originally leaned on
-this with two `[Header]` areas; the owner's 2026-10-30 revision of
-that file gives each block its own label — `[Header a]` through
-`[Header d]`). Copy is HTML-escaped into the styled slots; a label with no
-deck copy stays visible in the block and is named in a warning —
-nothing is silently blanked. The disclaimer's AMPscript (`%%…%%`)
-passes through untouched.
-
-Below the two windows, a **Component HTML Output** panel appears: one
-button per built block (its name + template file) — tap to view that
-block's HTML and copy it. **Page 3 — Preview** renders each deck's
-built blocks stacked in an email window, with bottom arrows (and
-dots) to shift through the builds, animated in the direction of
-travel.
+**Window 2 is retired** (owner's correction, 2026-10-30): the
+Component HTML Output replaces it, and Window 1 (AMPscript) stretches
+across alone. The panel gives **every deck its own row of buttons**
+leading to its built blocks — tap one to view that block's HTML and
+copy it — and once blocks are rendered, a **PREVIEW ALL BUILDS**
+button appears, leading to **Page 3 — Preview**, which renders each
+deck's built blocks stacked in an email window, with bottom arrows
+(and dots) to shift through the builds, animated in the direction
+of travel.
 
 ### The two QAs
 
