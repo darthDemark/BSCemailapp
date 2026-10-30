@@ -113,7 +113,10 @@ through untouched:
   (`IF` first, `ELSEIF` for the rest, `ENDIF`).
 - Per branch: `@version` = that branch's keycode, `@aNumber`, and the
   fixed content set Marquee / contentONE / contentTWO / Disclaimer as
-  `ContentBlockByKey(baseName + keycode + type)` — **no underscores
+  `ContentBlockByKey(ref + "_" + keycode + type)` (owner's correction,
+  2026-10-30: only the ref number and the keycode — the description
+  segment lives in the SFMC file name, never in a key; Disclaimer is
+  `ref + "_Disclaimer"`) — **no underscores
   between the components**; the Disclaimer key takes no keycode and is
   the same in every branch.
 - **Pruning:** any unfilled field's line is removed entirely — no

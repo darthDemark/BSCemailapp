@@ -1,4 +1,4 @@
-import { deriveSfmcName, extractRef } from "./naming";
+import { extractRef } from "./naming";
 import { parseKeycodes } from "./keycodes";
 import {
   selectTemplate,
@@ -69,7 +69,6 @@ export function fillTemplate(
   inputs: BuildInputs
 ): string {
   const ref = extractRef(inputs.jobNumber);
-  const baseName = deriveSfmcName(inputs.jobNumber);
   const keycodes = parseKeycodes(inputs.keycodesRaw);
   const isDynamic = cluster.buildType === "dynamic";
   const isMulti = isDynamic && cluster.variant === "multi";
@@ -159,11 +158,14 @@ export function fillTemplate(
           bodyLine.startsWith(`SET ${c.variable} `)
         );
         if (contentType) {
-          if (!baseName) continue; // no base name => no key can be formed; prune
+          if (!ref) continue; // no ref => no key can be formed; prune
+          // Content keys (owner's correction, 2026-10-30): ONLY the
+          // ref number and the keycode - REF3979650_IFP-ACA-IHV-AdvantmedMarquee.
+          // The description segment belongs to the SFMC file name only.
           const key =
             contentType.suffix === "Disclaimer"
-              ? `${baseName}Disclaimer`
-              : `${baseName}${keycode}${contentType.suffix}`;
+              ? `${ref}_Disclaimer`
+              : `${ref}_${keycode}${contentType.suffix}`;
           out.push(bodyLine.replace('""', `"${key}"`));
           continue;
         }

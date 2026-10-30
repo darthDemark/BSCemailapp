@@ -20,28 +20,28 @@ SET @utmContent = @MKT_LOB
 IF @MKT_LOB == "SAC" THEN 
 SET @version = "SAC"
 SET @aNumber = "A57222IFP-EM5-(multi)_1026"
-SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSACMarquee")
-SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSACcontentONE")
-SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSACcontentTWO")
-SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamDisclaimer")
+SET @contentMarquee = ContentBlockByKey("REF4113200_SACMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_SACcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_SACcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_Disclaimer")
 
 
 ELSEIF @MKT_LOB == "SD" THEN 
 SET @version = "SD"
 SET @aNumber = "A57222IFP-EM5-(multi)_1026"
-SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSDMarquee")
-SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSDcontentONE")
-SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSDcontentTWO")
-SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamDisclaimer")
+SET @contentMarquee = ContentBlockByKey("REF4113200_SDMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_SDcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_SDcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_Disclaimer")
 
 
 ELSEIF @MKT_LOB == "LOC_PL" THEN 
 SET @version = "LOC_PL"
 SET @aNumber = "A57222IFP-EM5-(multi)_1026"
-SET @contentMarquee = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamLOC_PLMarquee")
-SET @contentOne = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamLOC_PLcontentONE")
-SET @contentTwo = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamLOC_PLcontentTWO")
-SET @disclaimer = ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamDisclaimer")
+SET @contentMarquee = ContentBlockByKey("REF4113200_LOC_PLMarquee")
+SET @contentOne = ContentBlockByKey("REF4113200_LOC_PLcontentONE")
+SET @contentTwo = ContentBlockByKey("REF4113200_LOC_PLcontentTWO")
+SET @disclaimer = ContentBlockByKey("REF4113200_Disclaimer")
 
 ENDIF
 

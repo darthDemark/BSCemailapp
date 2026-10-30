@@ -39,9 +39,10 @@ describe("dynamic generation vs the golden example", () => {
   it("matches the golden file except each branch carries its OWN A number", () => {
     // The golden example (approved 2026-10-19) used one A number in all
     // branches; the 2026-10-20 ruling supersedes that single point.
-    // The fixture's content keys also use the 50-character description
-    // segment the owner set on 2026-10-28. Everything else must still
-    // match byte for byte.
+    // The fixture's content keys use ref + "_" + keycode + type only
+    // (owner's correction, 2026-10-30 - the description segment stays
+    // in the SFMC file name, never in a key). Everything else must
+    // still match byte for byte.
     // Rebuild expected by replacing the A occurrences in branch order.
     const parts = golden.split('SET @aNumber = "A57222IFP-EM5-(multi)_1026"');
     expect(parts).toHaveLength(4); // 3 branches => 4 segments
@@ -93,19 +94,19 @@ describe("dynamic generation vs the golden example", () => {
 
   it("builds content keys as baseName+keycode+type with NO underscores between components", () => {
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSACMarquee")'
+      'ContentBlockByKey("REF4113200_SACMarquee")'
     );
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamSDcontentONE")'
+      'ContentBlockByKey("REF4113200_SDcontentONE")'
     );
     expect(out).toContain(
-      'ContentBlockByKey("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_(dynamLOC_PLcontentTWO")'
+      'ContentBlockByKey("REF4113200_LOC_PLcontentTWO")'
     );
   });
 
   it("uses the same no-keycode Disclaimer key in every branch", () => {
     const matches = out.match(
-      /ContentBlockByKey\("REF4113200_EM5_2027_OE_IFP_WinBack_Email_5_More_Choice_\(dynamDisclaimer"\)/g
+      /ContentBlockByKey\("REF4113200_Disclaimer"\)/g
     );
     expect(matches).toHaveLength(3);
   });
@@ -213,5 +214,26 @@ describe("dynamic-multi (subject/preheader per keycode)", () => {
 
   it("still leaves zero empty strings outside the send-log comment", () => {
     expect(outsideSendLog(out)).not.toContain('""');
+  });
+});
+
+describe("content keys - ref + keycode only (owner's example, 2026-10-30)", () => {
+  it("builds REF3979650_IFP-ACA-IHV-AdvantmedMarquee", () => {
+    const out = generateAmpscript({
+      ...WINBACK,
+      jobNumber:
+        "5 EMAILS_Advantmed Risk Adjustment emails for ACA/MAD_REF3979650_A55529GMAD_0626",
+      keycodesRaw: "IFP-ACA-IHV-Advantmed",
+      perKeycodeA: { "IFP-ACA-IHV-Advantmed": "A55529GMAD_0626" },
+    });
+    expect(out).toContain(
+      'ContentBlockByKey("REF3979650_IFP-ACA-IHV-AdvantmedMarquee")'
+    );
+    expect(out).toContain(
+      'ContentBlockByKey("REF3979650_IFP-ACA-IHV-AdvantmedcontentONE")'
+    );
+    expect(out).toContain('ContentBlockByKey("REF3979650_Disclaimer")');
+    // The description segment never appears in a key.
+    expect(out).not.toContain("5_EMAILS");
   });
 });
