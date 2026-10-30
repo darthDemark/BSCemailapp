@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useAppState } from "@/components/StateProvider";
 import { OutputWindow } from "@/components/OutputWindow";
 import { DeliverableBar } from "@/components/DeliverableBar";
+import { ComponentOutputPanel } from "@/components/ComponentOutputPanel";
 import { generateAmpscript } from "@/lib/ampscript";
 import {
   parseDeckText,
@@ -13,6 +14,11 @@ import {
   renderDeckHtml,
 } from "@/lib/copyDeck";
 import { parseKeycodes } from "@/lib/keycodes";
+import {
+  buildComponentsForDeck,
+  MAX_DECK_WINDOWS,
+  type DeckEntry,
+} from "@/lib/componentBuild";
 import { validateVitalFields } from "@/lib/validation";
 import { deriveSfmcName } from "@/lib/naming";
 
@@ -22,6 +28,8 @@ export default function ProductionPage() {
   // Subject line and Preheader are VITAL. Missing any one → error state on
   // the field and NOTHING is output. Compliance stays optional (pruned).
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedBuildId, setSelectedBuildId] = useState("");
+  const [selectedComponentId, setSelectedComponentId] = useState("");
   const cls = (base: string, key: string) =>
     errors[key] ? `${base} invalid` : base;
   const clearError = (key: string) =>
@@ -46,14 +54,63 @@ export default function ProductionPage() {
   const isDynamic = state.buildType === "dynamic";
   const isMulti = isDynamic && state.variant === "multi";
 
-  const onDeckFile = async (file: File | undefined) => {
+  const onDeckFile = async (index: number, file: File | undefined) => {
     if (!file) return;
     try {
       const result = await readDeckFile(file);
-      update({ deckText: result.text, deckFileName: result.fileName });
+      updateDeck(index, { text: result.text, name: result.fileName });
     } catch {
       // Unreadable file: leave the deck as-is.
     }
+  };
+
+  // Deck windows (owner's design, 2026-10-29): up to 7 copy decks at
+  // once. Window 1 is the primary deck (deckText/deckFileName — the
+  // deck Window 2 and Content QA have always used); windows 2..7 live
+  // in extraDecks. ALL windows feed the component builder at Generate.
+  const deckEntries: DeckEntry[] = [
+    {
+      id: "deck-1",
+      name: state.deckFileName || "Copy deck 1",
+      text: state.deckText,
+    },
+    ...state.extraDecks,
+  ];
+
+  const updateDeck = (index: number, patch: Partial<DeckEntry>) => {
+    if (index === 0) {
+      update({
+        ...(patch.text !== undefined ? { deckText: patch.text } : {}),
+        ...(patch.name !== undefined ? { deckFileName: patch.name } : {}),
+      });
+      return;
+    }
+    update({
+      extraDecks: state.extraDecks.map((deck, i) =>
+        i === index - 1 ? { ...deck, ...patch } : deck
+      ),
+    });
+  };
+
+  const addDeck = () => {
+    if (deckEntries.length >= MAX_DECK_WINDOWS) return;
+    update({
+      extraDecks: [
+        ...state.extraDecks,
+        {
+          id: `deck-${Date.now()}`,
+          name: `Copy deck ${deckEntries.length + 1}`,
+          text: "",
+        },
+      ],
+    });
+  };
+
+  const removeDeck = (index: number) => {
+    if (index === 0) return;
+    update({
+      extraDecks: state.extraDecks.filter((_, i) => i !== index - 1),
+    });
   };
 
   const setPerKeycode = (
@@ -107,11 +164,18 @@ export default function ProductionPage() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) {
       // Nothing gets outputted when a vital field is missing.
-      update({ generatedAmpscript: "", generatedDeckText: "" });
+      update({
+        generatedAmpscript: "",
+        generatedDeckText: "",
+        componentBuilds: [],
+      });
       return;
     }
     update({
       generatedDeckText: state.deckText,
+      componentBuilds: deckEntries
+        .filter((deck) => deck.text.trim().length > 0)
+        .map((deck) => buildComponentsForDeck(deck)),
       generatedAmpscript: generateAmpscript({
         buildType: state.buildType,
         variant: state.variant,
@@ -317,25 +381,85 @@ export default function ProductionPage() {
           </>
         )}
 
-        <label>Copy deck</label>
-        <div className="field">
-          📎{" "}
-          <input
-            type="file"
-            accept=".txt,.md,.html,.htm,.docx"
-            onChange={(e) => onDeckFile(e.target.files?.[0])}
-          />{" "}
-          · or paste the deck below · paragraphs sorted into &lt;p&gt; blocks,
-          classes per the p-class bible
-          {state.deckFileName ? <> · loaded: <b>{state.deckFileName}</b></> : null}
+        <div className="decksectionhead">
+          <label style={{ margin: 0 }}>
+            Copy decks — component build ({deckEntries.length}/
+            {MAX_DECK_WINDOWS} windows)
+          </label>
+          <button
+            type="button"
+            className="adddeckbtn"
+            onClick={addDeck}
+            disabled={deckEntries.length >= MAX_DECK_WINDOWS}
+            aria-label="Add a copy deck window"
+            title={
+              deckEntries.length >= MAX_DECK_WINDOWS
+                ? "Window limit reached (7)"
+                : "Add a copy deck window"
+            }
+          >
+            <span className="plus" aria-hidden="true">
+              +
+            </span>{" "}
+            Add copy deck
+          </button>
         </div>
-        <textarea
-          className="field"
-          rows={5}
-          value={state.deckText}
-          onChange={(e) => update({ deckText: e.target.value, deckFileName: "" })}
-          placeholder="Paste the copy deck text here — a blank line starts a new series of paragraphs…"
-        />
+        <div className="deckline">
+          Mark each area of a deck with the bracket label its component
+          carries — [HEADLINE], [marquee copy], [text1], [Header1],
+          [bullet 1 a], [disclaimer1] — and GENERATE OUTPUT replaces
+          every bracket variable in the called component templates with
+          that area's copy. Window 1 is the primary deck (Window 2 +
+          Content QA); every window builds its own component blocks.
+        </div>
+
+        {deckEntries.map((deck, index) => (
+          <div className="deckcard" key={deck.id}>
+            <div className="deckcardhead">
+              <span>
+                COPY DECK {index + 1}
+                {index === 0 ? " — PRIMARY" : ""}
+                {deck.name && deck.name !== `Copy deck ${index + 1}` ? (
+                  <>
+                    {" "}· loaded: <b>{deck.name}</b>
+                  </>
+                ) : null}
+              </span>
+              {index > 0 ? (
+                <button
+                  type="button"
+                  className="removedeck"
+                  onClick={() => removeDeck(index)}
+                  aria-label={`Remove copy deck ${index + 1}`}
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
+            <div className="field">
+              📎{" "}
+              <input
+                type="file"
+                accept=".txt,.md,.html,.htm,.docx"
+                onChange={(e) => onDeckFile(index, e.target.files?.[0])}
+              />{" "}
+              · or paste the deck below
+            </div>
+            <textarea
+              className="field deckinput"
+              rows={5}
+              value={deck.text}
+              onChange={(e) =>
+                updateDeck(index, {
+                  text: e.target.value,
+                  ...(index === 0 ? { name: "" } : {}),
+                })
+              }
+              placeholder="Paste the copy deck here — bracket labels like [HEADLINE] mark where each area of copy goes…"
+              aria-label={`Copy deck ${index + 1}`}
+            />
+          </div>
+        ))}
 
         {Object.keys(errors).length > 0 ? (
           <div className="errorbar">
@@ -384,6 +508,19 @@ export default function ProductionPage() {
             )}
           </OutputWindow>
         </div>
+
+        {state.componentBuilds.length > 0 ? (
+          <ComponentOutputPanel
+            builds={state.componentBuilds}
+            selectedBuildId={selectedBuildId}
+            selectedComponentId={selectedComponentId}
+            onSelectBuild={(id) => {
+              setSelectedBuildId(id);
+              setSelectedComponentId("");
+            }}
+            onSelectComponent={setSelectedComponentId}
+          />
+        ) : null}
 
         <DeliverableBar />
       </div>

@@ -2,6 +2,7 @@ import { contentHash } from "./naming";
 import type { SubjectPreheader } from "./ampscript";
 import type { BuildType, DynamicVariant } from "./templates";
 import type { QaRun } from "./qaTypes";
+import type { ComponentBuild, DeckEntry } from "./componentBuild";
 
 /**
  * Whole-app state, shared between Production (/) and QA (/qa) via
@@ -22,6 +23,13 @@ export interface AppState {
   perKeycodeA: Record<string, string>;
   deckText: string;
   deckFileName: string;
+  /** Copy decks 2..7 for component building (owner's design,
+   *  2026-10-29). Deck 1 is deckText/deckFileName above — the primary
+   *  deck the AMPscript + QA flow has always used. Total windows are
+   *  capped at MAX_DECK_WINDOWS (7). */
+  extraDecks: DeckEntry[];
+  /** Component blocks built from every deck window at Generate. */
+  componentBuilds: ComponentBuild[];
   /** Window 1 content from the last Generate run. */
   generatedAmpscript: string;
   /** Deck snapshot taken at the last Generate run — Window 2 renders
@@ -48,6 +56,8 @@ export const DEFAULT_STATE: AppState = {
   perKeycodeA: {},
   deckText: "",
   deckFileName: "",
+  extraDecks: [],
+  componentBuilds: [],
   generatedAmpscript: "",
   generatedDeckText: "",
   pastedBuild: "",
@@ -76,6 +86,7 @@ export function currentInputsHash(state: AppState): string {
       state.perKeycode,
       state.perKeycodeA,
       state.deckText,
+      state.extraDecks,
       state.generatedAmpscript,
       state.generatedDeckText,
       state.pastedBuild,

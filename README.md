@@ -134,6 +134,39 @@ its series dictates, per the p-class bible
 (`text-formatting-guide.html`): first `mar-0T--G`, middle **no class**,
 last `mar-0B--G`, stand-alone `mar-0TB--G`. Deck text is HTML-escaped.
 
+### Component building — bracket-labelled decks (2026-10-29)
+
+The Production page holds **up to 7 copy deck windows** (the styled
+**+ Add copy deck** button adds more; window 1 is the primary deck —
+the one Window 2 and Content QA use). A deck marks its areas with the
+bracket labels the component templates carry — `[HEADLINE]`,
+`[marquee copy]`, `[text1]`, `[Header1]`, `[bullet 1 a]`,
+`[disclaimer1]`, … — and GENERATE OUTPUT replaces every bracket
+variable in the called component objects (`templates/components/`,
+registry in `lib/componentBuild.ts`) with that area's copy:
+
+| Block | Objects (the deck's labels choose) |
+|---|---|
+| Marquee component | `marquee-component-1.html` / `marquee-component-2.html` |
+| Content 1 | `component-1-a.html` |
+| Content 2 | `component-2-a.html` / `component-2-b.html` |
+| Disclaimer | `disclaimer-component.html` |
+
+The variant called is the one whose own labels the deck provides;
+only groups with matching labels are built. Repeated labels (the two
+`[Header]` areas in component-2-b) consume repeated deck areas in
+order. Copy is HTML-escaped into the styled slots; a label with no
+deck copy stays visible in the block and is named in a warning —
+nothing is silently blanked. The disclaimer's AMPscript (`%%…%%`)
+passes through untouched.
+
+Below the two windows, a **Component HTML Output** panel appears: one
+button per built block (its name + template file) — tap to view that
+block's HTML and copy it. **Page 3 — Preview** renders each deck's
+built blocks stacked in an email window, with bottom arrows (and
+dots) to shift through the builds, animated in the direction of
+travel.
+
 ### The two QAs
 
 - **QA 1 — Text Format QA** (`lib/qaFormat.ts`): parses the pasted

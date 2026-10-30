@@ -13,7 +13,7 @@ export function TopBar() {
   return (
     <>
       <h1 className="app">BlueShield Email Build App</h1>
-      <div className="sub">Page 1 Production → Page 2 QA</div>
+      <div className="sub">Page 1 Production → Page 2 QA → Page 3 Preview</div>
       <nav className="topnav">
         <Link href="/" className={pathname === "/" ? "navlink on" : "navlink"}>
           Page 1 — Production
@@ -23,6 +23,12 @@ export function TopBar() {
           className={pathname === "/qa" ? "navlink on" : "navlink"}
         >
           Page 2 — QA
+        </Link>
+        <Link
+          href="/preview"
+          className={pathname === "/preview" ? "navlink on" : "navlink"}
+        >
+          Page 3 — Preview
         </Link>
         <span className={unlocked ? "gatebadge open" : "gatebadge"}>
           {unlocked

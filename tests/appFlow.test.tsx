@@ -12,6 +12,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import ProductionPage from "@/app/page";
 import QaPage from "@/app/qa/page";
+import PreviewPage from "@/app/preview/page";
 import { StateProvider } from "@/components/StateProvider";
 import { STORAGE_KEY } from "@/lib/state";
 
@@ -290,6 +291,119 @@ describe("vital fields (owner's ruling, 2026-10-19/20)", () => {
     expect(monos()[3].classList.contains("invalid")).toBe(true);
     expect(container.querySelector(".errorbar")?.textContent).toContain(
       "isn't recognized"
+    );
+  });
+});
+
+describe("component decks (owner's design, 2026-10-29)", () => {
+  it("caps copy deck windows at 7 and removes them again", async () => {
+    window.localStorage.clear();
+    const user = userEvent.setup();
+    const { container } = render(
+      <StateProvider>
+        <ProductionPage />
+      </StateProvider>
+    );
+    const addBtn = () =>
+      container.querySelector<HTMLButtonElement>(".adddeckbtn")!;
+    const deckBoxes = () =>
+      container.querySelectorAll("textarea.deckinput");
+    expect(deckBoxes()).toHaveLength(1);
+    for (let i = 0; i < 6; i++) await user.click(addBtn());
+    expect(deckBoxes()).toHaveLength(7);
+    expect((addBtn() as HTMLButtonElement).disabled).toBe(true);
+    await user.click(
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="Remove copy deck 7"]'
+      )!
+    );
+    expect(deckBoxes()).toHaveLength(6);
+    expect((addBtn() as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("generates component blocks from bracket-labelled decks and previews both builds", async () => {
+    window.localStorage.clear();
+    const user = userEvent.setup();
+    const { container } = render(
+      <StateProvider>
+        <ProductionPage />
+        <PreviewPage />
+      </StateProvider>
+    );
+
+    // Static job: one A number, shared subject/preheader.
+    const typeRadios = container.querySelectorAll<HTMLInputElement>(
+      'input[name="email-type"]'
+    );
+    await user.click(typeRadios[0]); // STATIC
+    const monos = Array.from(
+      container.querySelectorAll<HTMLInputElement>("input.field.mono")
+    );
+    fireEvent.change(monos[0], { target: { value: WINBACK_LINE } });
+    fireEvent.change(monos[1], {
+      target: { value: "A57222IFP-EM5-(multi)_1026" },
+    });
+    const textFields =
+      container.querySelectorAll<HTMLInputElement>("input.field:not(.mono)");
+    fireEvent.change(textFields[0], {
+      target: { value: "You have more choice in your coverage" },
+    });
+    fireEvent.change(textFields[1], {
+      target: { value: "See what is new for your 2027 plan" },
+    });
+
+    const deckBoxes = () =>
+      container.querySelectorAll<HTMLTextAreaElement>("textarea.deckinput");
+    fireEvent.change(deckBoxes()[0], {
+      target: {
+        value:
+          "[HEADLINE]\nCare that comes to you\n[marquee copy]\nBody copy here.\n[CTA NAME]\nSchedule now\n[CTALINK]\nhttps://example.com/schedule\n[text1]\nIntro copy one.\n[disclaimer1]\nLegal copy one.",
+      },
+    });
+    await user.click(
+      container.querySelector<HTMLButtonElement>(".adddeckbtn")!
+    );
+    fireEvent.change(deckBoxes()[1], {
+      target: { value: "[text1]\nIntro copy two." },
+    });
+
+    await user.click(container.querySelector<HTMLButtonElement>("button.btn")!);
+
+    // Component panel: one button per built block; tap to view its HTML.
+    const compBtn = (name: string) =>
+      Array.from(container.querySelectorAll(".compbtn")).find((b) =>
+        b.textContent?.includes(name)
+      )!;
+    expect(compBtn("Marquee component")).toBeTruthy();
+    expect(compBtn("Disclaimer")).toBeTruthy();
+    await user.click(compBtn("Content 1"));
+    const code = container.querySelector(".componentcode");
+    expect(code?.textContent).toContain("Intro copy one.");
+    expect(code?.textContent).not.toContain("[text1]");
+
+    // Preview page: two builds, arrows shift between them.
+    const frame = () =>
+      container.querySelector<HTMLIFrameElement>("iframe.previewframe");
+    expect(frame()?.getAttribute("srcdoc")).toContain(
+      "Care that comes to you"
+    );
+    expect(container.querySelector(".previewcount")?.textContent).toContain(
+      "Build 1 of 2"
+    );
+    await user.click(
+      container.querySelector<HTMLButtonElement>('[aria-label="Next build"]')!
+    );
+    expect(container.querySelector(".previewcount")?.textContent).toContain(
+      "Build 2 of 2"
+    );
+    expect(frame()?.getAttribute("srcdoc")).toContain("Intro copy two.");
+    await user.click(
+      container.querySelector<HTMLButtonElement>(
+        '[aria-label="Previous build"]'
+      )!
+    );
+    expect(container.querySelector(".previewcount")?.textContent).toContain(
+      "Build 1 of 2"
     );
   });
 });
